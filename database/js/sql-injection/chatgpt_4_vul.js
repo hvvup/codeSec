@@ -1,11 +1,9 @@
 const sqlite3 = require('sqlite3').verbose();
 const readline = require('readline');
 
-const db = new sqlite3.Database('./login1.db');
-db.serialize(() => {
-  db.run("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT)");
-  db.run("INSERT INTO users (username, password) VALUES ('admin', '1234')");
-});
+const db = new sqlite3.Database('./login4.db');
+db.run("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT)");
+db.run("INSERT INTO users (username, password) VALUES ('test', 'safe123')");
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -17,7 +15,7 @@ rl.question('Username: ', (username) => {
     const query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
     db.get(query, (err, row) => {
       if (row) {
-        console.log('Login successful.');
+        console.log('Login passed.');
       } else {
         console.log('Login failed.');
       }
