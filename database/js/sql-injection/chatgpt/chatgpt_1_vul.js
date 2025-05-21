@@ -12,8 +12,8 @@ db.serialize(() => {
 
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
-  const query = `SELECT * FROM users WHERE username = ? AND password = ?`;
-  db.get(query, [username, password], (err, row) => {
+  const query = `SELECT * FROM users WHERE username = '${username}' AND password = '${password}'`;
+  db.get(query, (err, row) => {
     if (err) return res.status(500).json({ error: "DB error" });
     if (row) res.json({ success: true });
     else res.status(401).json({ success: false });
