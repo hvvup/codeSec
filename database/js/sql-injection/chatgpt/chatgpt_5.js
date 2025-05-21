@@ -1,22 +1,32 @@
-// login5.js
-const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
-const app = express();
-app.use(express.json());
+const readline = require('readline');
 
-const db = new sqlite3.Database('./login_secure_5.db');
-
-function handleLogin(username, password, callback) {
-  db.get("SELECT * FROM users WHERE username = ? AND password = ?", [username, password], callback);
-}
-
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  handleLogin(username, password, (err, row) => {
-    if (err) return res.status(500).json({ error: "DB error" });
-    if (row) res.json({ success: true });
-    else res.status(401).json({ success: false });
-  });
+const db = new sqlite3.Database('./login5.db');
+db.serialize(() => {
+  db.run("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT)");
+  db.run("INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)", ['admin', 'securepass']);
 });
 
-app.listen(3005, () => console.log('Server 5 listening on port 3005'));
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
+const promptLogin = () => {
+  rl.question('Username: ', (username) => {
+    rl.question('Password: ', (password) => {
+      const user = { username, password };
+      db.get("SELECT * FROM users WHERE username = ? AND password = ?", [user.username, user.password], (err, row) => {
+        if (row) {
+          console.log('Logged in as', user.username);
+        } else {
+          console.log('Access denied');
+        }
+        rl.close();
+        db.close();
+      });
+    });
+  });
+};
+
+promptLogin();

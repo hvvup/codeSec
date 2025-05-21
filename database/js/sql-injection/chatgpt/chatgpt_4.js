@@ -1,22 +1,31 @@
-// login4.js
-const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
-const app = express();
-app.use(express.json());
+const readline = require('readline');
 
-app.use((req, res, next) => {
-  req.db = new sqlite3.Database('./login_secure_4.db');
-  next();
+function sanitize(input) {
+  return input.replace(/[^\w@.-]/g, '');
+}
+
+const db = new sqlite3.Database('./login4.db');
+db.run("CREATE TABLE IF NOT EXISTS users (username TEXT, password TEXT)");
+db.run("INSERT INTO users (username, password) VALUES (?, ?)", ['test', 'safe123']);
+
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
 });
 
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  req.db.get("SELECT * FROM users WHERE username = ? AND password = ?", [username, password], (err, row) => {
-    req.db.close();
-    if (err) return res.status(500).json({ error: "DB error" });
-    if (row) res.json({ success: true });
-    else res.status(401).json({ success: false });
+rl.question('Username: ', (user) => {
+  rl.question('Password: ', (pass) => {
+    const username = sanitize(user);
+    const password = sanitize(pass);
+    db.get("SELECT * FROM users WHERE username = ? AND password = ?", [username, password], (err, row) => {
+      if (row) {
+        console.log('Login passed.');
+      } else {
+        console.log('Login failed.');
+      }
+      rl.close();
+      db.close();
+    });
   });
 });
-
-app.listen(3004, () => console.log('Server 4 listening on port 3004'));
