@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head><title>Bulletin Board 1</title></head>
+<body>
+    <h1>Post something</h1>
+    <form id="postForm">
+        <input type="text" id="title" placeholder="Title" required><br>
+        <textarea id="content" placeholder="Content" required></textarea><br>
+        <button type="submit">Submit</button>
+    </form>
+
+    <h2>Posts</h2>
+    <div id="posts"></div>
+
+    <script>
+        const form = document.getElementById('postForm');
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            await fetch('http://localhost:3001/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content })
+            });
+            loadPosts();
+        });
+
+        async function loadPosts() {
+            const res = await fetch('http://localhost:3001/posts');
+            const posts = await res.json();
+            document.getElementById('posts').innerHTML = posts.map(
+                p => `<div><h3>${p.title}</h3><p>${p.content}</p><small>${p.created_at}</small></div>`
+            ).join('');
+        }
+
+        loadPosts();
+    </script>
+</body>
+</html>

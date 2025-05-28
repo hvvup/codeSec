@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulletin Board with Categories</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(45deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .sidebar {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            height: fit-content;
+        }
+        
+        .sidebar h3 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .category-list {
+            list-style: none;
+        }
+        
+        .category-item {
+            margin-bottom: 10px;
+        }
+        
+        .category-btn {
+            display: block;
+            width: 100%;
+            padding: 12px 15px;
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+        
+        .category-btn:hover, .category-btn.active {
+            background: #74b9ff;
+            color: white;
+            border-color: #74b9ff;
+            transform: translateX(5px);
+        }
+        
+        .category-count {
+            float: right;
+            background: #6c757d;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        
+        .category-btn.active .category-count {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .content-area {
+            min-height: 600px;
+        }
+        
+        .post-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #74b9ff;
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 120px;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #74b9ff, #0984e3);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: transform 0.2s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            margin-left: 10px;
+        }
+        
+        .posts-container {
+            margin-top: 30px;
+        }
+        
+        .posts-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .posts-count {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .post {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.2s ease;
+        }
+        
+        .post:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .post-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .post-meta {
+            color: #6c757d;
+            font-size: 0.9rem;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .category-tag {
+            background: #74b9ff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .view-count {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .post-content {
+            color: #495057;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .post-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .delete-btn, .edit-btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.3s ease;
+        }
+        
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .delete-btn:hover {
+            background: #c82333;
+        }
+        
+        .edit-btn {
+            background: #28a745;
+            color: white;
+        }
+        
+        .edit-btn:hover {
+            background: #218838;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 20px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .close:hover {
+            color: black;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .sidebar {
+                order: 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Categorized Bulletin Board</h1>
+            <p>Organize your discussions by topics</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="sidebar">
+                <h3>Categories</h3>
+                <ul class="category-list" id="categoryList">
+                    <li class="category-item">
+                        <button class="category-btn active" data-category="">
+                            All Posts <span class="category-count" id="allCount">0</span>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="content-area">
+                <div class="post-form">
+                    <h2 style="margin-bottom: 20px; color: #495057;">Create New Post</h2>
+                    <form id="postForm">
+                        <div class="form-group">
+                            <label for="title">Title:</label>
+                            <input type="text" id="title" name="title" required maxlength="200">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="author">Author:</label>
+                            <input type="text" id="author" name="author" required maxlength="100">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="category">Category:</label>
+                            <select id="category" name="category">
+                                <option value="">Select a category</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="content">Content:</label>
+                            <textarea id="content" name="content" required maxlength="5000"></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn">Post Message</button>
+                        <button type="button" class="btn btn-secondary" onclick="resetForm()" style="display: none;" id="cancelBtn">Cancel</button>
+                    </form>
+                </div>
+                
+                <div id="message"></div>
+                
+                <div class="posts-container">
+                    <div class="posts-header">
+                        <h2 id="postsTitle">All Posts</h2>
+                        <span class="posts-count" id="postsCount">0 posts</span>
+                    </div>
+                    <div id="posts" class="loading">Loading posts...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Post</h2>
+            <form id="editForm">
+                <input type="hidden" id="editId">
+                <div class="form-group">
+                    <label for="editTitle">Title:</label>
+                    <input type="text" id="editTitle" name="title" required maxlength="200">
+                </div>
+                
+                <div class="form-group">
+                    <label for="editCategory">Category:</label>
+                    <select id="editCategory" name="category">
+                        <option value="">Select a category</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editContent">Content:</label>
+                    <textarea id="editContent" name="content" required maxlength="5000"></textarea>
+                </div>
+                
+                <button type="submit" class="btn">Update Post</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        let currentCategory = '';
+        let categories = [];
+        let editingPostId = null;
+        
+        // DOM elements
+        const postForm = document.getElementById('postForm');
+        const editForm = document.getElementById('editForm');
+        const postsContainer = document.getElementById('posts');
+        const messageDiv = document.getElementById('message');
+        const categoryList = document.getElementById('categoryList');
+        const categorySelect = document.getElementById('category');
+        const editCategorySelect = document.getElementById('editCategory');
+        const postsTitle = document.getElementById('postsTitle');
+        const postsCount = document.getElementById('postsCount');
+        const editModal = document.getElementById('editModal');
+        const cancelBtn = document.getElementById('cancelBtn');
+        
+        // Show message
+        function showMessage(text, type = 'success') {
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => {
+                messageDiv.innerHTML = '';
+            }, 5000);
+        }
+        
+        // Sanitize HTML
+        function sanitizeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+        
+        // Format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+        }
+        
+        // Load categories
+        async function loadCategories() {
+            try {
+                const response = await fetch(`${API_BASE}/categories`);
+                if (!response.ok) throw new Error('Failed to load categories');
+                
+                categories = await response.json();
+                
+                // Populate category selects
+                categorySelect.innerHTML = '<option value="">Select a category</option>';
+                editCategorySelect.innerHTML = '<option value="">Select a category</option>';
+                
+                categories.forEach(cat => {
+                    const option = `<option value="${cat.id}">${sanitizeHTML(cat.name)}</option>`;
+                    categorySelect.innerHTML += option;
+                    editCategorySelect.innerHTML += option;
+                });
+                
+                // Load category stats and update sidebar
+                loadCategoryStats();
+                
+            } catch (error) {
+                console.error('Error loading categories:', error);
+                showMessage('Failed to load categories', 'error');
+            }
+        }
+        
+        // Load category statistics
+        async function loadCategoryStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats/categories`);
+                if (!response.ok) throw new Error('Failed to load category stats');
+                
+                const stats = await response.json();
+                let totalPosts = 0;
+                
+                // Clear existing category buttons (except "All Posts")
+                const existingButtons = categoryList.querySelectorAll('.category-item:not(:first-child)');
+                existingButtons.forEach(btn => btn.remove());
+                
+                stats.forEach(stat => {
+                    totalPosts += stat.post_count;
+                    
+                    const li = document.createElement('li');
+                    li.className = 'category-item';
+                    li.innerHTML = `
+                        <button class="category-btn" data-category="${stat.id}">
+                            ${sanitizeHTML(stat.name)} 
+                            <span class="category-count">${stat.post_count}</span>
+                        </button>
+                    `;
+                    categoryList.appendChild(li);
+                });
+                
+                // Update "All Posts" count
+                document.getElementById('allCount').textContent = totalPosts;
+                
+                // Add click listeners to category buttons
+                categoryList.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('category-btn')) {
+                        const categoryId = e.target.dataset.category;
+                        selectCategory(categoryId, e.target);
+                    }
+                });
+                
+            } catch (error) {
+                console.error('Error loading category stats:', error);
+            }
+        }
+        
+        // Select category
+        function selectCategory(categoryId, buttonElement) {
+            // Update active button
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            buttonElement.classList.add('active');
+            
+            currentCategory = categoryId;
+            
+            // Update posts title
+            if (categoryId === '') {
+                postsTitle.textContent = 'All Posts';
+            } else {
+                const category = categories.find(cat => cat.id == categoryId);
+                postsTitle.textContent = category ? category.name : 'Posts';
+            }
+            
+            loadPosts();
+        }
+        
+        // Load and display posts
+        async function loadPosts() {
+            try {
+                const url = currentCategory ? 
+                    `${API_BASE}/posts?category=${currentCategory}` : 
+                    `${API_BASE}/posts`;
+                
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Failed to load posts');
+                
+                const posts = await response.json();
+                
+                // Update posts count
+                postsCount.textContent = `${posts.length} post${posts.length !== 1 ? 's' : ''}`;
+                
+                if (posts.length === 0) {
+                    postsContainer.innerHTML = '<p class="loading">No posts in this category yet. Be the first to post!</p>';
+                    return;
+                }
+                
+                postsContainer.innerHTML = posts.map(post => `
+                    <div class="post">
+                        <div class="post-header">
+                            <div>
+                                <div class="post-title">${sanitizeHTML(post.title)}</div>
+                                <div class="post-meta">
+                                    <span>By ${sanitizeHTML(post.author)}</span>
+                                    <span>${formatDate(post.created_at)}</span>
+                                    ${post.category_name ? `<span class="category-tag">${sanitizeHTML(post.category_name)}</span>` : ''}
+                                    <span class="view-count">👁️ ${post.view_count}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="post-content">${sanitizeHTML(post.content)}</div>
+                        <div class="post-actions">
+                            <button class="edit-btn" onclick="editPost(${post.id})">Edit</button>
+                            <button class="delete-btn" onclick="deletePost(${post.id})">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (error) {
+                console.error('Error loading posts:', error);
+                postsContainer.innerHTML = '<p class="error">Failed to load posts. Please try again.</p>';
+            }
+        }
+        
+        // Create or update post
+        postForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(postForm);
+            const postData = {
+                title: formData.get('title').trim(),
+                author: formData.get('author').trim(),
+                content: formData.get('content').trim(),
+                categoryId: formData.get('category') || null
+            };
+            
+            if (!postData.title || !postData.author || !postData.content) {
+                showMessage('All fields are required', 'error');
+                return;
+            }
+            
+            try {
+                const url = editingPostId ? `${API_BASE}/posts/${editingPostId}` : `${API_BASE}/posts`;
+                const method = editingPostId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(postData)
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || `Failed to ${editingPostId ? 'update' : 'create'} post`);
+                }
+                
+                showMessage(`Post ${editingPostId ? 'updated' : 'created'} successfully!`);
+                resetForm();
+                loadPosts();
+                loadCategoryStats();
+                
+            } catch (error) {
+                console.error('Error with post:', error);
+                showMessage(error.message, 'error');
+            }
+        });
+        
+        // Edit post
+        async function editPost(id) {
+            try {
+                const response = await fetch(`${API_BASE}/posts/${id}`);
+                if (!response.ok) throw new Error('Failed to load post');
+                
+                const post = await response.json();
+                
+                document.getElementById('editId').value = post.id;
+                document.getElementById('editTitle').value = post.title;
+                document.getElementById('editContent').value = post.content;
+                document.getElementById('editCategory').value = post.category_id || '';
+                
+                editModal.style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading post for edit:', error);
+                showMessage('Failed to load post for editing', 'error');
+            }
+        }
+        
+        // Edit form submission
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const id = document.getElementById('editId').value;
+            const formData = new FormData(editForm);
+            const postData = {
+                title: formData.get('title').trim(),
+                content: formData.get('content').trim(),
+                categoryId: formData.get('category') || null
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/posts/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(postData)
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to update post');
+                }
+                
+                showMessage('Post updated successfully!');
+                closeEditModal();
+                loadPosts();
+                loadCategoryStats();
+                
+            } catch (error) {
+                console.error('Error updating post:', error);
+                showMessage(error.message, 'error');
+            }
+        });
+        
+        // Delete post
+        async function deletePost(id) {
+            if (!confirm('Are you sure you want to delete this post?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/posts/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to delete post');
+                }
+                
+                showMessage('Post deleted successfully!');
+                loadPosts();
+                loadCategoryStats();
+                
+            } catch (error) {
+                console.error('Error deleting post:', error);
+                showMessage(error.message, 'error');
+            }
+        }
+        
+        // Reset form
+        function resetForm() {
+            postForm.reset();
+            editingPostId = null;
+            cancelBtn.style.display = 'none';
+        }
+        
+        // Close edit modal
+        function closeEditModal() {
+            editModal.style.display = 'none';
+            editForm.reset();
+        }
+        
+        // Modal close events
+        document.querySelector('.close').addEventListener('click', closeEditModal);
+        window.addEventListener('click', (e) => {
+            if (e.target === editModal) {
+                closeEditModal();
+            }
+        });
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCategories();
+            loadPosts();
+        });
+    </script>
+</body>
+</html>
