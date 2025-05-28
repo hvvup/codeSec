@@ -1,13 +1,32 @@
 <!DOCTYPE html>
-<html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>Parent Page</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    iframe { width: 400px; height: 300px; border: 1px solid #ccc; }
+  </style>
+</head>
 <body>
-  <iframe src="gpt_child.html" id="childFrame"></iframe>
+  <h1>Parent Window</h1>
+  <p>아래 iframe과 메시지를 주고받습니다.</p>
+  <iframe src="gpt_child.html" id="childFrame" name="childFrame"></iframe>
+
   <script>
-    window.addEventListener('message', function (event) {
+    
+    function handleMessage(event) {
+      console.log('메시지 수신:', event.data);
+
+      
       if (event.data === 'ping') {
+        
         event.source.postMessage('pong', event.origin);
+        console.log('pong 메시지 전송 완료');
       }
-    });
+    }
+    
+    window.addEventListener('message', handleMessage, false);
   </script>
 </body>
 </html>
