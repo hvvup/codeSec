@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <iframe src="child.html" id="childFrame"></iframe>
+  <script>
+    window.onmessage = (e) => {
+      const handlers = {
+        'ping': () => e.source.postMessage('pong', e.origin),
+      };
+
+      if (e.data in handlers) handlers[e.data]();
+    };
+  </script>
+</body>
+</html>

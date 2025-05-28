@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <iframe src="child.html" id="childFrame"></iframe>
+  <script>
+    const SAFE_ORIGIN = 'http://127.0.0.1:5500';
+
+    window.addEventListener('message', (event) => {
+      try {
+        if (event.origin !== SAFE_ORIGIN) return;
+        if (event.data && event.data.action === 'ping') {
+          event.source.postMessage({ action: 'pong' }, event.origin);
+        }
+      } catch (err) {
+        console.error('Message handling error:', err);
+      }
+    });
+  </script>
+</body>
+</html>

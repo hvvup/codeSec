@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <iframe src="child.html" id="childFrame"></iframe>
+  <script>
+    const TRUSTED_ORIGIN = 'http://127.0.0.1:5500';
+
+    window.onmessage = (e) => {
+      if (e.origin !== TRUSTED_ORIGIN) return;
+
+      const handlers = {
+        'ping': () => e.source.postMessage('pong', e.origin),
+      };
+
+      if (e.data in handlers) handlers[e.data]();
+    };
+  </script>
+</body>
+</html>

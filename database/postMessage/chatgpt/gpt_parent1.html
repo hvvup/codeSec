@@ -1,0 +1,18 @@
+<!-- parent.html -->
+<!DOCTYPE html>
+<html>
+<body>
+  <iframe src="gpt_child.html" id="childFrame"></iframe>
+  <script>
+    const allowedOrigin = 'http://127.0.0.1:5500';
+
+    window.addEventListener('message', function (event) {
+      if (event.origin !== allowedOrigin) return;
+
+      if (event.data === 'ping') {
+        event.source.postMessage('pong', event.origin);
+      }
+    });
+  </script>
+</body>
+</html>

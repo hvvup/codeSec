@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <h2>Child Page</h2>
+  <script>
+    const parentOrigin = 'http://127.0.0.1:5500/database/js/postMessage/chatgpt/gpt_child.html';
+
+    // Send message to parent
+    window.parent.postMessage('ping', parentOrigin);
+
+    // Listen for response
+    window.addEventListener('message', (event) => {
+      if (event.origin !== parentOrigin) return;
+      console.log('Received from parent:', event.data);
+    });
+  </script>
+</body>
+</html>

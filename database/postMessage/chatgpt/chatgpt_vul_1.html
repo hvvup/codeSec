@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <iframe src="gpt_child.html" id="childFrame"></iframe>
+  <script>
+    window.addEventListener('message', function (event) {
+      if (event.data === 'ping') {
+        event.source.postMessage('pong', event.origin);
+      }
+    });
+  </script>
+</body>
+</html>

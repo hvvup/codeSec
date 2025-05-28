@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <iframe src="child.html" id="childFrame"></iframe>
+  <script>
+    function handleMessage(event) {
+      if (typeof event.data === 'string' && event.data === 'ping') {
+        event.source.postMessage('pong', event.origin);
+      }
+    }
+
+    window.addEventListener('message', handleMessage);
+  </script>
+</body>
+</html>

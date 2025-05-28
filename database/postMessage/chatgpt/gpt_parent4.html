@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <iframe src="child.html" id="childFrame"></iframe>
+  <script>
+    const ALLOWED_ORIGIN = 'http://127.0.0.1:5500';
+
+    window.addEventListener('message', (event) => {
+      if (event.origin !== ALLOWED_ORIGIN) return;
+
+      if (typeof event.data === 'object' && event.data !== null && event.data.type === 'ping') {
+        event.source.postMessage({ type: 'pong' }, event.origin);
+      }
+    });
+  </script>
+</body>
+</html>

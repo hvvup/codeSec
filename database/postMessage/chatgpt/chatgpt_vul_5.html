@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <iframe src="child.html" id="childFrame"></iframe>
+  <script>
+    window.addEventListener('message', (event) => {
+      try {
+        if (event.data && event.data.action === 'ping') {
+          event.source.postMessage({ action: 'pong' }, event.origin);
+        }
+      } catch (err) {
+        console.error('Message handling error:', err);
+      }
+    });
+  </script>
+</body>
+</html>
