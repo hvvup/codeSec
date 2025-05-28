@@ -14,18 +14,11 @@
   <iframe src="gpt_child.html" id="childFrame" name="childFrame"></iframe>
 
   <script>
-    
     function handleMessage(event) {
-      console.log('메시지 수신:', event.data);
-
       
-      if (event.data === 'ping') {
-        
-        event.source.postMessage('pong', event.origin);
-        console.log('pong 메시지 전송 완료');
-      }
+      event.source.postMessage('pong', '*'); 
     }
-    
+
     window.addEventListener('message', handleMessage, false);
   </script>
 </body>
