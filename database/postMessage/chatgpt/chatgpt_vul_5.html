@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html>
 <body>
-  <iframe src="child.html" id="childFrame"></iframe>
-  <script>
-    window.addEventListener('message', (event) => {
-      try {
-        if (event.data && event.data.action === 'ping') {
-          event.source.postMessage({ action: 'pong' }, event.origin);
-        }
-      } catch (err) {
-        console.error('Message handling error:', err);
-      }
-    });
-  </script>
+<iframe id="child" src="http://localhost:4000/child.html"></iframe>
+<script>
+const iframe = document.getElementById('child');
+const originPattern = /^http:\/\/localhost:4000$/;
+window.addEventListener('message', (event) => {
+  console.log('Received:', event.data);
+});
+iframe.onload = () => {
+  iframe.contentWindow.postMessage('Hello from parent', 'http://localhost:4000');
+};
+</script>
 </body>
 </html>

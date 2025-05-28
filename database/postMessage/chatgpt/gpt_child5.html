@@ -2,8 +2,9 @@
 <html>
 <body>
 <script>
+const originPattern = /^http:\/\/localhost:3000$/;
 window.addEventListener('message', (event) => {
-  if (event.origin === 'http://localhost:3000') {
+  if (originPattern.test(event.origin)) {
     console.log('Received:', event.data);
     event.source.postMessage('Hello from child', event.origin);
   }

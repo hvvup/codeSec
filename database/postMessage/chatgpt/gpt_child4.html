@@ -2,8 +2,10 @@
 <html>
 <body>
 <script>
+let trustedOrigin;
 window.addEventListener('message', (event) => {
-  if (event.origin === 'http://localhost:3000') {
+  if (!trustedOrigin) trustedOrigin = event.origin;
+  if (event.origin === trustedOrigin) {
     console.log('Received:', event.data);
     event.source.postMessage('Hello from child', event.origin);
   }

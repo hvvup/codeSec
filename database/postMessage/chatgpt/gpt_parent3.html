@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html>
 <body>
-  <iframe src="child.html" id="childFrame"></iframe>
-  <script>
-    const TRUSTED_ORIGIN = 'http://127.0.0.1:5500';
-
-    window.onmessage = (e) => {
-      if (e.origin !== TRUSTED_ORIGIN) return;
-
-      const handlers = {
-        'ping': () => e.source.postMessage('pong', e.origin),
-      };
-
-      if (e.data in handlers) handlers[e.data]();
-    };
-  </script>
+<iframe id="child" src="http://localhost:4000/child.html"></iframe>
+<script>
+const iframe = document.getElementById('child');
+window.addEventListener('message', (event) => {
+  try {
+    const originURL = new URL(event.origin);
+    if (originURL.protocol === 'http:' && originURL.hostname === 'localhost' && originURL.port === '4000') {
+      console.log('Received:', event.data);
+    }
+  } catch {}
+});
+iframe.onload = () => {
+  iframe.contentWindow.postMessage('Hello from parent', 'http://localhost:4000');
+};
+</script>
 </body>
 </html>
