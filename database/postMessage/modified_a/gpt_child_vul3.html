@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+// Fixed: Added proper origin validation using the URL object
+const allowedOrigins = new Set(['http://localhost:3000']);
+
+window.addEventListener('message', (event) => {
+  try {
+    const originURL = new URL(event.origin);
+    
+    // Validate against allowed origins
+    if (!allowedOrigins.has(event.origin)) {
+      console.warn('Message from untrusted origin:', event.origin);
+      return; // Reject messages from untrusted origins
+    }
+    
+    console.log('Received:', event.data);
+    event.source.postMessage('Hello from child', event.origin);
+  } catch (error) {
+    console.error('Invalid origin URL:', event.origin);
+    return; // Reject malformed origins
+  }
+});
+</script>
+</body>
+</html>

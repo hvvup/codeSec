@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+// Fixed: Added proper origin validation
+const allowedOrigins = new Set(['http://localhost:3000']);
+
+window.addEventListener('message', (event) => {
+  // Validate origin before processing
+  if (!allowedOrigins.has(event.origin)) {
+    console.warn('Message from untrusted origin:', event.origin);
+    return; // Reject messages from untrusted origins
+  }
+  
+  console.log('Received:', event.data);
+  // Only respond to trusted origins
+  event.source.postMessage('Hello from child', event.origin);
+});
+</script>
+</body>
+</html>

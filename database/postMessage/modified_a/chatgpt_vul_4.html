@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<body>
+<iframe id="child" src="http://localhost:4000/child.html"></iframe>
+<script>
+const iframe = document.getElementById('child');
+const trustedOrigin = new URL(iframe.src).origin;
+
+window.addEventListener('message', (event) => {
+  // Added missing origin validation using the trustedOrigin
+  if (event.origin !== trustedOrigin) {
+    console.warn('Message from untrusted origin:', event.origin);
+    return; // Reject messages from untrusted origins
+  }
+  
+  console.log('Received:', event.data);
+});
+
+iframe.onload = () => {
+  iframe.contentWindow.postMessage('Hello from parent', trustedOrigin);
+};
+</script>
+</body>
+</html>
