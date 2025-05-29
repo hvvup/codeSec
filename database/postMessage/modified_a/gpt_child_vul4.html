@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+// Fixed: Use predefined trusted origins instead of trusting first message
+const allowedOrigins = new Set(['http://localhost:3000']);
+
+window.addEventListener('message', (event) => {
+  // Validate against predefined trusted origins
+  if (!allowedOrigins.has(event.origin)) {
+    console.warn('Message from untrusted origin:', event.origin);
+    return; // Reject messages from untrusted origins
+  }
+  
+  console.log('Received:', event.data);
+  event.source.postMessage('Hello from child', event.origin);
+});
+</script>
+</body>
+</html>
