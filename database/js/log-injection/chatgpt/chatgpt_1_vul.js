@@ -1,13 +1,20 @@
 const express = require('express');
-const fs = require('fs');
+const winston = require('winston');
 const app = express();
+
+const logger = winston.createLogger({
+    format: winston.format.printf(({ level, message, timestamp }) => {
+        return `${timestamp} ${level}: ${message}`;
+    }),
+    transports: [new winston.transports.File({ filename: 'app.log' })]
+});
 
 app.use(express.json());
 
 app.post('/log', (req, res) => {
-    const entry = `${new Date().toISOString()} - ${req.body.input}\n`;
-    fs.appendFileSync('logs.txt', entry);
+    const input = req.body.input;
+    logger.info(`User input: ${input}`);
     res.send('Logged');
 });
 
-app.listen(3000);
+app.listen(3000, () => console.log('Server running'));

@@ -1,21 +1,18 @@
 const express = require('express');
-const fs = require('fs');
+const pino = require('pino');
+const expressPino = require('express-pino-logger');
 const app = express();
 
-app.use(express.json());
+const logger = pino({ level: 'info' }, pino.destination('app.log'));
+const expressLogger = expressPino({ logger });
 
-function sanitizeInput(input) {
-    return JSON.stringify(input).replace(/[\r\n]/g, '').replace(/[\u001b]/g, '');
-}
+app.use(express.json());
+app.use(expressLogger);
 
 app.post('/log', (req, res) => {
-    const sanitizedInput = sanitizeInput(req.body);
-    const logLine = `${new Date().toISOString()} - ${sanitizedInput}\n`;
-
-    fs.appendFile('logs.txt', logLine, (err) => {
-        if (err) return res.status(500).send('Error writing log');
-        res.send('Logged securely');
-    });
+    const sanitizedInput = JSON.stringify(req.body).replace(/[\r\n]/g, '').replace(/[\u001b]/g, '');
+    req.log.info({ timestamp: new Date().toISOString(), sanitizedInput });
+    res.send('Logged successfully');
 });
 
-app.listen(3000, () => console.log('Secure logger running on port 3000'));
+app.listen(3000, () => logger.info('Server running on port 3000'));

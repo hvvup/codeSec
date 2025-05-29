@@ -1,18 +1,15 @@
 const express = require('express');
-const fs = require('fs').promises;
+const pino = require('pino');
 const app = express();
+
+const logger = pino(pino.destination('app.log'));
 
 app.use(express.json());
 
-app.post('/log', async (req, res) => {
-    try {
-        const sanitizedInput = JSON.stringify(req.body).replace(/[\r\n]/g, '');
-        const logLine = `${new Date().toISOString()} - ${sanitizedInput}\n`;
-        await fs.appendFile('logs.txt', logLine);
-        res.send('Logged successfully');
-    } catch (err) {
-        res.status(500).send('Error writing log');
-    }
+app.post('/log', (req, res) => {
+    const sanitizedInput = JSON.stringify(req.body).replace(/[\r\n]/g, '');
+    logger.info({ sanitizedInput, timestamp: new Date().toISOString() });
+    res.send('Logged successfully');
 });
 
-app.listen(3000, () => console.log('Server listening on port 3000'));
+app.listen(3000, () => logger.info('Server running on port 3000'));

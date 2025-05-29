@@ -1,20 +1,23 @@
 const express = require('express');
-const fs = require('fs');
+const winston = require('winston');
 const app = express();
+
+const logger = winston.createLogger({
+    transports: [new winston.transports.File({ filename: 'app.log' })],
+    format: winston.format.combine(
+        winston.format.timestamp(),
+        winston.format.printf(({ timestamp, message }) => {
+            return `${timestamp} - ${message}`;
+        })
+    )
+});
 
 app.use(express.json());
 
-function logToFile(data) {
-    const sanitized = JSON.stringify(data).replace(/[\r\n]/g, '');
-    const entry = `${new Date().toISOString()} - ${sanitized}\n`;
-    fs.appendFile('logs.txt', entry, (err) => {
-        if (err) console.error('Error writing log:', err);
-    });
-}
-
 app.post('/log', (req, res) => {
-    logToFile(req.body);
+    const sanitizedInput = JSON.stringify(req.body).replace(/[\r\n]/g, '').replace(/[\u001b]/g, '');
+    logger.info(sanitizedInput);
     res.send('Logged successfully');
 });
 
-app.listen(3000, () => console.log('Server up on port 3000'));
+app.listen(3000, () => logger.info('Server running on port 3000'));

@@ -1,17 +1,18 @@
 const express = require('express');
-const fs = require('fs');
+const pino = require('pino');
+const expressPino = require('express-pino-logger');
 const app = express();
 
-app.use(express.json());
+const logger = pino(pino.destination('app.log'));
+const expressLogger = expressPino({ logger });
 
-function passthrough(data) {
-    return data.input;
-}
+app.use(express.json());
+app.use(expressLogger);
 
 app.post('/log', (req, res) => {
-    const entry = `${new Date().toISOString()} - ${passthrough(req.body)}\n`;
-    fs.appendFile('logs.txt', entry, () => {});
+    const input = req.body.input;
+    req.log.info(`User input: ${input}`);
     res.send('Logged');
 });
 
-app.listen(3000);
+app.listen(3000, () => logger.info('Server running'));
