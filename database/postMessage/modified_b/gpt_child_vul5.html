@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+const originPattern = /^http:\/\/localhost:3000$/;
+
+window.addEventListener('message', (event) => {
+  // SECURITY FIX: Now actually using the originPattern for validation
+  if (!originPattern.test(event.origin)) {
+    console.warn('Rejected message from untrusted origin:', event.origin);
+    return;
+  }
+  console.log('Received:', event.data);
+  // SECURITY FIX: Send response to validated origin
+  event.source.postMessage('Hello from child', event.origin);
+});
+</script>
+</body>
+</html>
