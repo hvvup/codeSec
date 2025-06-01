@@ -9,7 +9,8 @@ if (!fs.existsSync(logDirectory)) {
 }
 
 const logFilePath = path.join(logDirectory, 'user_input.log');
-const logger = pino(pino.destination({ dest: logFilePath, sync: false }));
+const destination = pino.destination({ dest: logFilePath, sync: false });
+const logger = pino({}, destination);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,7 +23,8 @@ app.post('/log', (req, res) => {
     return res.status(400).json({ error: 'Input must be a string' });
   }
 
-  logger.info(userInput);
+  destination.write(`${userInput}\n`);  // <-- raw write, direct injection point
+
   res.status(200).json({ status: 'Logged successfully' });
 });
 

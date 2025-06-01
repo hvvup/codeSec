@@ -13,7 +13,8 @@ if (!fs.existsSync(logDirectory)) {
   fs.mkdirSync(logDirectory);
 }
 
-const logger = pino(pino.destination({ dest: logFile, sync: false }));
+const destination = pino.destination({ dest: logFile, sync: false });
+const logger = pino({}, destination);
 
 app.use(express.json());
 
@@ -23,11 +24,11 @@ app.post('/log', (req, res) => {
     return res.status(400).json({ error: 'Input must be a string' });
   }
 
-  logger.info(userInput);
+  destination.write(`${userInput}\n`);  // <-- raw write, direct injection point
+
   res.json({ status: 'Logged successfully' });
 });
 
 app.listen(PORT, () => {
   console.log(`Server is listening on port ${PORT}`);
-  logger.info(`Server started on port ${PORT}`);
 });

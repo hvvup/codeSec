@@ -2,14 +2,5 @@ POST http://localhost:3000/log
 Content-Type: application/json
 
 {
-    "log": "abc\ndfs"
-}
-
-###
-
-POST http://localhost:3000/log 
-Content-Type: application/json
-
-{
-    "log": "가나다라라"
+    "input": "abc\nlalala"
 }
