@@ -1,4 +1,0 @@
-[2025-06-01T03:49:41.618Z] INFO: {"log":"가나다라라"}
-{"level":30,"time":1748749979559,"pid":35236,"hostname":"hwijungcho","timestamp":"2025-06-01T03:52:59.555Z","input":"{\"log\":\"가나다라라\"}"}
-[2025-06-01T05:07:35.017Z] INFO: {"log":"가나\n다라라"}
-{"level":30,"time":1748754526646,"pid":34092,"hostname":"hwijungcho","timestamp":"2025-06-01T05:08:46.643Z","input":"{\"log\":\"가나\\n다라라\"}"}

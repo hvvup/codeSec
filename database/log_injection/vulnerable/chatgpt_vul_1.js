@@ -10,7 +10,7 @@ const LOG_FILE = path.join(__dirname, 'user_logs.txt');
 
 function logInput(data) {
   const timestamp = new Date().toISOString();
-  const logEntry = `[${timestamp}] ${JSON.stringify(data)}\n`;
+  const logEntry = `[${timestamp}] ${data}\n`;
 
   try {
     fs.appendFileSync(LOG_FILE, logEntry, { encoding: 'utf8', mode: 0o600 });
@@ -20,23 +20,13 @@ function logInput(data) {
 }
 
 app.post('/log', (req, res) => {
-  const userInput = req.body;
-
-  if (!userInput || typeof userInput !== 'object') {
-    return res.status(400).json({ error: 'Invalid JSON input' });
+  const userInput = req.body.input;
+  if (typeof userInput !== 'string') {
+    return res.status(400).json({ error: 'Input must be a string' });
   }
 
   logInput(userInput);
   res.status(200).json({ message: 'Data logged successfully' });
-});
-
-app.get('/', (req, res) => {
-  res.send('Secure Logging Server is running');
-});
-
-app.use((err, req, res, next) => {
-  console.error('Unexpected error:', err);
-  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 app.listen(PORT, () => {

@@ -10,7 +10,7 @@ const LOG_FILE = path.join(__dirname, 'user_logs.txt');
 
 function sanitize(input) {
   if (typeof input === 'string') {
-    return input.replace(/[\r\nㅁ]/g, ' ').replace(/[\0]/g, '');
+    return input.replace(/[\r\n]/g, ' ').replace(/[\0]/g, '');
   } else if (typeof input === 'object') {
     return JSON.stringify(input).replace(/[\r\n]/g, ' ').replace(/[\0]/g, '');
   }
@@ -51,4 +51,5 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is listening on http:});
+    console.log(`Server listening on port ${PORT}`);
+});

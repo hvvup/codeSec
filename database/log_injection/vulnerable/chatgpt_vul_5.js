@@ -7,12 +7,7 @@ const PORT = 3000;
 
 const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.printf(({ timestamp, level, message }) => {
-      return `${timestamp} [${level}]: ${message}`;
-    })
-  ),
+  format: winston.format.printf(({ message }) => message),
   transports: [
     new winston.transports.File({ filename: path.join(__dirname, 'app.log') })
   ]
@@ -21,24 +16,13 @@ const logger = winston.createLogger({
 app.use(express.json());
 
 app.post('/log', (req, res) => {
-  try {
-    const userInput = req.body;
-
-    if (!userInput || Object.keys(userInput).length === 0) {
-      return res.status(400).json({ error: 'No input provided' });
-    }
-
-    logger.info(`Received input: ${JSON.stringify(userInput)}`);
-
-    res.json({ status: 'Logged successfully' });
-  } catch (error) {
-    logger.error(`Error handling request: ${error.message}`);
-    res.status(500).json({ error: 'Internal server error' });
+  const userInput = req.body.input;
+  if (typeof userInput !== 'string') {
+    return res.status(400).json({ error: 'Input must be a string' });
   }
-});
 
-app.get('/', (req, res) => {
-  res.send('Server is running. Use POST /log to send data.');
+  logger.info(userInput);
+  res.json({ status: 'Logged successfully' });
 });
 
 app.listen(PORT, () => {
