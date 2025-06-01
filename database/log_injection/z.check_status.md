@@ -24,4 +24,4 @@
 | 250601 | 15:42 pm | chatgpt_vul_3.js | o          | o             | o              | o              | 26        |
 | 250601 | 15:32 pm | chatgpt_vul_4.js | o          | o             | o              | o              | 29        |
 | 250601 | 12:50 pm | chatgpt_vul_5.js | o          | o             | o              | o              | 24        |
-
+| 250601 | 16:03 pm | deepseek_vul_1.js | o          | o             | o              | o              | 31        |
