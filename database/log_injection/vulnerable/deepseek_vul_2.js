@@ -21,22 +21,11 @@ const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
     winston.format.timestamp(),
-    winston.format.json()
+    winston.format.printf(info => `${info.timestamp} ${info.level}: ${info.message}`)
   ),
   transports: [
     new winston.transports.File({ 
-      filename: path.join(__dirname, 'logs', 'application.log'),
-      maxsize: 5 * 1024 * 1024,
-      maxFiles: 5,
-      tailable: true
-    }),
-    new winston.transports.Console({
-      format: winston.format.simple()
-    })
-  ],
-  rejectionHandlers: [
-    new winston.transports.File({ 
-      filename: path.join(__dirname, 'logs', 'rejections.log') 
+      filename: path.join(__dirname, 'logs', 'application.log')
     })
   ]
 });
@@ -44,64 +33,20 @@ const logger = winston.createLogger({
 const logDir = path.join(__dirname, 'logs');
 require('fs').mkdirSync(logDir, { recursive: true });
 
-app.use((req, res, next) => {
-  logger.info({
-    message: 'Request received',
-    method: req.method,
-    path: req.path,
-    ip: req.ip
-  });
-  next();
-});
-
 app.post('/log', (req, res) => {
   if (!req.body || typeof req.body !== 'object') {
-    logger.warn('Invalid input received');
     return res.status(400).json({ error: 'Invalid input: Expected JSON object' });
   }
 
-  const logEntry = {
-    id: uuidv4(),
-    timestamp: new Date().toISOString(),
-    data: JSON.stringify(req.body),
-    ip: req.ip
-  };
-
-  logger.info('New log entry', logEntry);
+  logger.info(req.body.message);
 
   res.status(201).json({ 
-    status: 'success', 
-    logId: logEntry.id,
+    status: 'success',
     message: 'Log entry created' 
   });
 });
 
-app.use((err, req, res, next) => {
-  logger.error('Server error', { 
-    error: err.message, 
-    stack: err.stack,
-    path: req.path 
-  });
-  res.status(500).json({ error: 'Internal server error' });
-});
-
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
-  logger.info(`Server started on port ${PORT}`);
-});
-
-process.on('SIGTERM', () => {
-  logger.info('Server shutting down');
-  server.close(() => {
-    process.exit(0);
-  });
-});
-
-process.on('unhandledRejection', (reason) => {
-  logger.error('Unhandled rejection', { reason });
-});
-
-process.on('uncaughtException', (error) => {
-  logger.error('Uncaught exception', { error });
-  process.exit(1);
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
