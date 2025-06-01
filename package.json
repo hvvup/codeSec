@@ -1,7 +1,13 @@
 {
   "dependencies": {
     "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.1.0",
     "package.json": "^2.0.1",
-    "sqlite3": "^5.1.7"
+    "pino": "^9.7.0",
+    "pino-http": "^10.4.0",
+    "sqlite3": "^5.1.7",
+    "uuid": "^11.1.0",
+    "winston": "^3.17.0"
   }
 }

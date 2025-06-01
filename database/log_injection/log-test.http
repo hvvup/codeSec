@@ -1,0 +1,15 @@
+POST http://localhost:3000/log 
+Content-Type: application/json
+
+{
+    "log": "가나\n다라라"
+}
+
+###
+
+POST http://localhost:3000/log 
+Content-Type: application/json
+
+{
+    "log": "가나다라라"
+}
