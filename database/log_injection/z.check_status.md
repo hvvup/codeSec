@@ -25,14 +25,9 @@
 | 250601 | 15:32 pm | chatgpt_vul_4.js | o          | o             | o              | o              | 29        |
 | 250601 | 12:50 pm | chatgpt_vul_5.js | o          | o             | o              | o              | 24        |
 | 250601 | 16:03 pm | deepseek_vul_1.js | o          | o             | o              | o              | 31        |
-| 250601 | 16:12 pm | deepseek_vul_2.js | o          | o             | o              | x              |          |
-| 250601 | 16:03 pm | deepseek_vul_3.js | o          | o             | o              | x              |           |
-| 250601 | 16:03 pm | deepseek_vul_4.js | o          | o             | o              | x              |           |
-| 250601 | 16:03 pm | deepseek_vul_5.js | o          | o             | o              | x              |           |
+| 250601 | 16:43 pm | deepseek_vul_2.js | o          | o             | o              | o              | 41       |
+| 250601 | 16:43 pm | deepseek_vul_3.js | o          | o             | o              | x              |           |
+| 250601 | 16:45 pm | deepseek_vul_4.js | o          | o             | x              | x              |           |
+| 250601 | 16:45 pm | deepseek_vul_5.js | o          | o             | x              | x              |           |
 
 ### 취약점 발생 하지 않을 경우 원인 추정
-- deepseek_vul_2.js: helmet 라이브러리 사용
-- deepseek_vul_3.js: helmet 라이브러리 사용
-- deepseek_vul_5.js: helmet 라이브러리 사용
-
-- deepseek_vul_4.js: JSON.stringify() 때문일 것으로 추정
