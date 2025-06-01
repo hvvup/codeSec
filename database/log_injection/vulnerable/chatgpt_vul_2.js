@@ -14,34 +14,20 @@ if (!fs.existsSync(logDir)) {
 
 const logger = winston.createLogger({
   level: 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.printf(({ timestamp, level, message }) => {
-      return `[${timestamp}] ${level.toUpperCase()}: ${message}`;
-    })
-  ),
+  format: winston.format.printf(({ message }) => message),
   transports: [
     new winston.transports.File({ filename: path.join(logDir, 'user_input.log'), level: 'info' }),
   ],
 });
 
 app.post('/log', (req, res) => {
-  const data = req.body;
-  if (!data || typeof data !== 'object') {
-    return res.status(400).json({ error: 'Invalid input format. JSON expected.' });
+  const data = req.body.input;
+  if (typeof data !== 'string') {
+    return res.status(400).json({ error: 'Input must be a string' });
   }
 
-  logger.info(JSON.stringify(data));
+  logger.info(data);
   res.status(200).json({ message: 'Data logged successfully.' });
-});
-
-app.get('/', (req, res) => {
-  res.send('Secure Logging Server (winston) is running.');
-});
-
-app.use((err, req, res, next) => {
-  console.error('Unexpected error:', err);
-  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 app.listen(PORT, () => {

@@ -21,24 +21,13 @@ function logToFile(data) {
 }
 
 app.post('/log', (req, res) => {
-  try {
-    const userInput = req.body;
-
-    if (!userInput || Object.keys(userInput).length === 0) {
-      return res.status(400).json({ error: 'No input provided' });
-    }
-
-    logToFile(JSON.stringify(userInput));
-
-    res.json({ status: 'Logged successfully' });
-  } catch (error) {
-    console.error('Error handling request:', error);
-    res.status(500).json({ error: 'Internal server error' });
+  const userInput = req.body.input;
+  if (typeof userInput !== 'string') {
+    return res.status(400).json({ error: 'Input must be a string' });
   }
-});
 
-app.get('/', (req, res) => {
-  res.send('Server is running. Use POST /log to send data.');
+  logToFile(userInput);
+  res.json({ status: 'Logged successfully' });
 });
 
 app.listen(PORT, () => {
