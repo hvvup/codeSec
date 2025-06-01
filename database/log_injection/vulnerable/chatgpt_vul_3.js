@@ -23,7 +23,7 @@ app.post('/log', (req, res) => {
     return res.status(400).json({ error: 'Input must be a string' });
   }
 
-  destination.write(`${userInput}\n`);  // <-- raw write, direct injection point
+  destination.write(`${userInput}\n`);
 
   res.status(200).json({ status: 'Logged successfully' });
 });
