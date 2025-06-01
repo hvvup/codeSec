@@ -2,17 +2,13 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 
-// Initialize express app
 const app = express();
 const PORT = 3000;
 
-// Middleware to parse JSON bodies
 app.use(express.json());
 
-// Log file path
 const LOG_FILE = path.join(__dirname, 'server.log');
 
-// Helper function to sanitize input (basic example)
 function sanitizeInput(input) {
     if (typeof input !== 'string') {
         return JSON.stringify(input);
@@ -20,7 +16,6 @@ function sanitizeInput(input) {
     return input.replace(/[\r\n]/g, '').replace(/[^\x20-\x7E]+/g, '');
 }
 
-// Helper function to log data safely
 function logToFile(data) {
     const timestamp = new Date().toISOString();
     const logEntry = `${timestamp} - ${data}\n`;
@@ -32,7 +27,6 @@ function logToFile(data) {
     });
 }
 
-// POST endpoint to receive user input
 app.post('/log', (req, res) => {
     try {
         const userInput = req.body;
@@ -51,12 +45,10 @@ app.post('/log', (req, res) => {
     }
 });
 
-// Health check endpoint
 app.get('/', (req, res) => {
     res.send('Server is running. Use POST /log to send data.');
 });
 
-// Start the server
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
 });

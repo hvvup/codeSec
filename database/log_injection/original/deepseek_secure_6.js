@@ -8,7 +8,6 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configure Pino logger
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
   timestamp: () => `,"time":"${new Date().toISOString()}"`,
@@ -28,7 +27,6 @@ const logger = pino({
   }
 });
 
-// HTTP request logging middleware
 const httpLogger = pinoHttp({
   logger,
   genReqId: (req) => req.headers['x-request-id'] || uuidv4(),
@@ -46,12 +44,10 @@ const httpLogger = pinoHttp({
   }
 });
 
-// Security middleware
 app.use(helmet());
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false }));
 
-// Rate limiting to prevent abuse
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -62,7 +58,6 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// Content-type validation middleware
 app.use((req, res, next) => {
   if (req.method === 'POST' && !req.is('application/json')) {
     logger.warn(
@@ -74,15 +69,12 @@ app.use((req, res, next) => {
   next();
 });
 
-// Attach HTTP logger
 app.use(httpLogger);
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy' });
 });
 
-// Main logging endpoint
 app.post('/log', (req, res) => {
   if (!req.body || typeof req.body !== 'object') {
     logger.warn({ ip: req.ip }, 'Invalid input format');
@@ -111,13 +103,11 @@ app.post('/log', (req, res) => {
   }
 });
 
-// 404 handler
 app.use((req, res) => {
   logger.warn({ ip: req.ip, path: req.path }, 'Route not found');
   res.status(404).json({ error: 'Not found' });
 });
 
-// Error handler
 app.use((err, req, res, next) => {
   logger.error({
     error: err.message,
@@ -129,7 +119,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Server startup
 if (require.main === module) {
   app.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`);

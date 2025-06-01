@@ -7,26 +7,22 @@ const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const fs = require('fs');
 
-// Initialize Express app
 const app = express();
 
-// Security middleware
 app.use(helmet());
-app.use(express.json({ limit: '10kb' })); // Limit JSON payload size
+app.use(express.json({ limit: '10kb' }));
 
-// Rate limiting to prevent abuse
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  windowMs: 15 * 60 * 1000, 
+  max: 100,
   message: 'Too many requests from this IP, please try again later'
 });
 app.use(limiter);
 
-// Configure Pino logger
+
 const logDir = path.join(__dirname, 'logs');
 const logFile = path.join(logDir, 'application.log');
 
-// Ensure log directory exists
 if (!fs.existsSync(logDir)) {
   fs.mkdirSync(logDir, { recursive: true });
 }
@@ -39,11 +35,10 @@ const logger = pino({
   }
 }, pino.destination({
   dest: logFile,
-  minLength: 4096, // Buffer before writing
-  sync: false // Asynchronous logging
+  minLength: 4096, 
+  sync: false
 }));
 
-// HTTP request logging middleware
 const httpLogger = pinoHttp({
   logger: logger,
   genReqId: (req) => req.headers['x-request-id'] || uuidv4(),
@@ -64,7 +59,6 @@ const httpLogger = pinoHttp({
 });
 app.use(httpLogger);
 
-// Log endpoint
 app.post('/log', (req, res) => {
   if (!req.body || typeof req.body !== 'object') {
     logger.warn({ 
@@ -90,7 +84,6 @@ app.post('/log', (req, res) => {
   });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   logger.error({
     message: err.message,
@@ -101,13 +94,11 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
   logger.info(`Server started on port ${PORT}`);
 });
 
-// Handle shutdown gracefully
 process.on('SIGTERM', () => {
   logger.info('Server shutting down');
   server.close(() => {
@@ -124,7 +115,6 @@ process.on('uncaughtException', (error) => {
   process.exit(1);
 });
 
-// Log flush interval for production
 setInterval(() => {
   logger.flush();
 }, 10000).unref();

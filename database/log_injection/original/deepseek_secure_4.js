@@ -7,11 +7,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const LOG_FILE = 'user_input.log';
 
-// Security middleware
-app.use(express.json({ limit: '10kb' })); // Limit JSON payload size
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10kb' }));app.use(express.urlencoded({ extended: false }));
 
-// Validate content type is JSON for POST requests
 app.use((req, res, next) => {
   if (req.method === 'POST' && !req.is('application/json')) {
     return res.status(415).send('Unsupported Media Type: JSON expected');
@@ -19,7 +16,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Helper function for secure file writing
 async function secureWriteToFile(data) {
   try {
     const timestamp = new Date().toISOString();
@@ -27,8 +23,7 @@ async function secureWriteToFile(data) {
       id: uuidv4(),
       timestamp,
       data,
-      ip: this.ip // Context-bound IP from the request
-    };
+      ip: this.ip    };
 
     const logString = JSON.stringify(logEntry) + '\n';
 
@@ -45,14 +40,12 @@ async function secureWriteToFile(data) {
   }
 }
 
-// POST endpoint for receiving and logging user input
 app.post('/log', async (req, res) => {
   if (!req.body || typeof req.body !== 'object') {
     return res.status(400).send('Invalid input: expected JSON object');
   }
 
   try {
-    // Create a bound version of the function with request context
     const writeWithContext = secureWriteToFile.bind({ ip: req.ip });
     
     const success = await writeWithContext(req.body);
@@ -68,13 +61,11 @@ app.post('/log', async (req, res) => {
   }
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).send('An unexpected error occurred');
 });
 
-// Start server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
@@ -82,4 +73,4 @@ if (process.env.NODE_ENV !== 'test') {
   });
 }
 
-module.exports = app; // For testing purposes
+module.exports = app;

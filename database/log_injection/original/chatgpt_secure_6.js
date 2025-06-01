@@ -3,28 +3,22 @@ const pino = require('pino');
 const path = require('path');
 const fs = require('fs');
 
-// Initialize express app
 const app = express();
 const PORT = 3000;
 
-// Set up log directory and file
 const logDirectory = path.join(__dirname, 'logs');
 const logFile = path.join(logDirectory, 'app.log');
 
-// Ensure log directory exists
 if (!fs.existsSync(logDirectory)) {
     fs.mkdirSync(logDirectory);
 }
 
-// Set up pino logger
 const logger = pino(
     pino.destination({ dest: logFile, sync: false })
 );
 
-// Middleware to parse JSON body
 app.use(express.json());
 
-// Helper function to sanitize input (basic approach)
 function sanitizeInput(input) {
     if (typeof input !== 'string') {
         return JSON.stringify(input);
@@ -32,7 +26,6 @@ function sanitizeInput(input) {
     return input.replace(/[\r\n]/g, '').replace(/[^\x20-\x7E]+/g, '');
 }
 
-// POST endpoint to log user input
 app.post('/log', (req, res) => {
     try {
         const userInput = req.body;
@@ -51,12 +44,10 @@ app.post('/log', (req, res) => {
     }
 });
 
-// Simple health check endpoint
 app.get('/', (req, res) => {
     res.send('Server is running. Use POST /log to send data.');
 });
 
-// Start server
 app.listen(PORT, () => {
     console.log(`Server is listening on port ${PORT}`);
     logger.info({ message: `Server started on port ${PORT}` });

@@ -6,7 +6,6 @@ const helmet = require('helmet');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configure Winston logger
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
@@ -32,12 +31,9 @@ const logger = winston.createLogger({
   ]
 });
 
-// Security middleware
 app.use(helmet());
-app.use(express.json({ limit: '10kb' })); // Limit JSON payload size
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10kb' }));app.use(express.urlencoded({ extended: false }));
 
-// Validate content type is JSON for POST requests
 app.use((req, res, next) => {
   if (req.method === 'POST' && !req.is('application/json')) {
     logger.warn('Invalid content-type attempt', {
@@ -50,7 +46,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Request logging middleware
 app.use((req, res, next) => {
   logger.info('Request received', {
     method: req.method,
@@ -60,7 +55,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// POST endpoint for receiving and logging user input
 app.post('/log', (req, res) => {
   if (!req.body || typeof req.body !== 'object' || Object.keys(req.body).length === 0) {
     logger.warn('Invalid input received', { ip: req.ip });
@@ -88,7 +82,6 @@ app.post('/log', (req, res) => {
   }
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   logger.error('Unhandled error', { 
     error: err.message,
@@ -99,11 +92,10 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {
     logger.info(`Server started on port ${PORT}`);
   });
 }
 
-module.exports = { app, logger }; // For testing purposes
+module.exports = { app, logger };
