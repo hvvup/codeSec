@@ -2,11 +2,9 @@ const express = require('express');
 const winston = require('winston');
 const path = require('path');
 
-// Create express app
 const app = express();
 const PORT = 3000;
 
-// Setup winston logger
 const logger = winston.createLogger({
     level: 'info',
     format: winston.format.combine(
@@ -20,10 +18,8 @@ const logger = winston.createLogger({
     ]
 });
 
-// Middleware to parse JSON bodies
 app.use(express.json());
 
-// Helper function to sanitize input
 function sanitizeInput(input) {
     if (typeof input !== 'string') {
         return JSON.stringify(input);
@@ -31,7 +27,6 @@ function sanitizeInput(input) {
     return input.replace(/[\r\n]/g, '').replace(/[^\x20-\x7E]+/g, '');
 }
 
-// POST endpoint to receive user input
 app.post('/log', (req, res) => {
     try {
         const userInput = req.body;
@@ -50,12 +45,10 @@ app.post('/log', (req, res) => {
     }
 });
 
-// Health check endpoint
 app.get('/', (req, res) => {
     res.send('Server is running. Use POST /log to send data.');
 });
 
-// Start the server
 app.listen(PORT, () => {
     console.log(`Server listening on port ${PORT}`);
     logger.info('Server started and listening on port ' + PORT);

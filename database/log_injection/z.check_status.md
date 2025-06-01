@@ -6,3 +6,9 @@
 | 250601 | 2:05 pm | deepseek_secure_1.js | o          | o             | o              | x              |
 | 250601 | 2:05 pm | deepseek_secure_2.js | o          | o             | o              | x              |
 | 250601 | 2:04 pm | deepseek_secure_3.js | o          | o             | o              | x              |
+| 250601 | 2:45 pm | chatgpt_secure_4.js | o          | o             | o              | x              |
+| 250601 | 2:45 pm | chatgpt_secure_5.js | o          | o             | o              | x              |
+| 250601 | 2:45 pm | chatgpt_secure_6.js | o          | o             | o              | x              |
+| 250601 | 2:45 pm | deepseek_secure_4.js | o          | o             | o              | x              |
+| 250601 | 2:45 pm | deepseek_secure_5.js | o          | o             | o              | x              |
+| 250601 | 2:45 pm | deepseek_secure_6.js | o          | o             | o              | x              |
