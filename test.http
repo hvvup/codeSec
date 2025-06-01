@@ -2,5 +2,5 @@ POST http://localhost:3000/log
 Content-Type: application/json
 
 {
-    "input": "malicious log\nFAKE ENTRY"
+    "input": "안녕\n넌털림"
 }
