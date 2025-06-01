@@ -1,7 +1,6 @@
-POST http://localhost:3001/login
+POST http://localhost:3000/log
 Content-Type: application/json
 
 {
-    "username": "admin' --",
-    "password": "1234"
+    "input": "malicious log\nFAKE ENTRY"
 }
