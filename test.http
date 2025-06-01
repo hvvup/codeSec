@@ -1,6 +1,0 @@
-POST http://localhost:3000/log
-Content-Type: application/json
-
-{
-    "input": "안녕\n넌털림"
-}
