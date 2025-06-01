@@ -1,0 +1,3 @@
+{"level":30,"time":"2025-06-01T05:43:21.637Z","pid":18600,"hostname":"DESKTOP-2CO0Q9C","msg":"Server running on port 3000"}
+{"level":30,"time":"2025-06-01T05:43:34.953Z","pid":18600,"hostname":"DESKTOP-2CO0Q9C","input":{"input":"attack attempt\nNEW LOG LINE: injected"},"ip":"::ffff:127.0.0.1","userAgent":"vscode-restclient","msg":"User input received"}
+{"level":30,"time":"2025-06-01T05:43:34.956Z","pid":18600,"hostname":"DESKTOP-2CO0Q9C","req":{"id":"8a5a7afe-ca65-462b-8ce0-923eecffa91e","method":"POST","url":"/log","userAgent":"vscode-restclient"},"res":{"statusCode":201},"responseTime":3,"msg":"request completed"}

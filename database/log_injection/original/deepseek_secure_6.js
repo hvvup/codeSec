@@ -12,9 +12,6 @@ const PORT = process.env.PORT || 3000;
 const logger = pino({
   level: process.env.LOG_LEVEL || 'info',
   timestamp: () => `,"time":"${new Date().toISOString()}"`,
-  formatters: {
-    level: (label) => ({ level: label })
-  },
   transport: {
     targets: [
       {
@@ -51,13 +48,13 @@ const httpLogger = pinoHttp({
 
 // Security middleware
 app.use(helmet());
-app.use(express.json({ limit: '10kb' })); // Prevent large payloads
+app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: false }));
 
 // Rate limiting to prevent abuse
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per window
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   handler: (req, res) => {
     logger.warn({ ip: req.ip }, 'Rate limit exceeded');
     res.status(429).json({ error: 'Too many requests' });
@@ -99,7 +96,7 @@ app.post('/log', (req, res) => {
       userAgent: req.headers['user-agent']
     }, 'User input received');
 
-    res.status(201).json({ 
+    res.status(201).json({
       status: 'success',
       message: 'Input logged successfully'
     });
@@ -109,7 +106,7 @@ app.post('/log', (req, res) => {
       stack: error.stack,
       input: req.body
     }, 'Logging failed');
-    
+
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -128,7 +125,7 @@ app.use((err, req, res, next) => {
     path: req.path,
     method: req.method
   }, 'Unhandled error');
-  
+
   res.status(500).json({ error: 'Internal server error' });
 });
 
