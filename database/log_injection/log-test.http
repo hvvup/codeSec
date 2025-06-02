@@ -2,5 +2,5 @@ POST http://localhost:3000/log
 Content-Type: application/json
 
 {
-    "input": "abc\nterlim"
+    "input": "abc\n[log injection]this function is injected"
 }
