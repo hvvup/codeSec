@@ -1,4 +1,3 @@
-// secure-html-server-v3.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
@@ -14,10 +13,8 @@ const port = 3000;
 
 const logPath = path.join(__dirname, 'html_secure_log.json');
 
-// 미들웨어
 app.use(bodyParser.json());
 
-// HTML 확장 및 보안 처리
 async function expandHtmlSafely(inputHtml) {
   const processor = unified()
     .use(rehypeParse, { fragment: true })
@@ -33,7 +30,6 @@ async function expandHtmlSafely(inputHtml) {
   return String(file);
 }
 
-// 보안 로그 기록 함수
 function logSecurely(data) {
   const entry = {
     timestamp: new Date().toISOString(),
@@ -42,7 +38,6 @@ function logSecurely(data) {
   fs.appendFileSync(logPath, JSON.stringify(entry) + '\n', 'utf8');
 }
 
-// POST 요청 처리
 app.post('/expand', async (req, res) => {
   try {
     const htmlInput = req.body.html;
@@ -62,7 +57,6 @@ app.post('/expand', async (req, res) => {
   }
 });
 
-// 서버 시작
 app.listen(port, () => {
   console.log(`Secure HTML Server running on port ${port}`);
 });

@@ -53,5 +53,4 @@ app.post('/expand', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Vulnerable HTML Expansion Server running at http://localhost:${port}`);
-});
+  console.log(`Vulnerable HTML Expansion Server running at http:});

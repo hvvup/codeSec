@@ -7,20 +7,17 @@ const { serialize } = require('dom-serializer');
 const helmet = require('helmet');
 const morgan = require('morgan');
 
-// Initialize Express app with security middleware
 const app = express();
 app.use(helmet());
 app.use(bodyParser.json({ limit: '10kb' }));
 app.use(morgan('combined'));
 
-// HTML processing function with security protections
 function processHtml(inputHtml) {
   return new Promise((resolve, reject) => {
     const handler = new DomHandler((error, dom) => {
       if (error) return reject(error);
 
       try {
-        // Process all nodes to expand self-closing tags
         DomUtils.findAll((node) => {
           if (node.type === 'tag' && 
               DomUtils.isTag(node) && 
@@ -29,12 +26,10 @@ function processHtml(inputHtml) {
               node.name !== 'hr' && 
               node.name !== 'input' && 
               node.children.length === 0) {
-            node.children = []; // Ensure empty children array
-          }
+            node.children = [];          }
           return false;
         }, dom);
 
-        // Serialize back to HTML with proper closing tags
         const result = serialize(dom, {
           xmlMode: false,
           decodeEntities: true,
@@ -47,7 +42,6 @@ function processHtml(inputHtml) {
       }
     });
 
-    // Configure HTML parser with security options
     const parser = new Parser(handler, {
       decodeEntities: true,
       lowerCaseTags: true,
@@ -61,7 +55,6 @@ function processHtml(inputHtml) {
   });
 }
 
-// Input validation middleware
 function validateInput(req, res, next) {
   if (!req.body || typeof req.body.html !== 'string') {
     return res.status(400).json({ error: 'Invalid input format' });
@@ -72,7 +65,6 @@ function validateInput(req, res, next) {
   next();
 }
 
-// Main processing endpoint
 app.post('/process-html', validateInput, async (req, res) => {
   try {
     const processedHtml = await processHtml(req.body.html);
@@ -83,7 +75,6 @@ app.post('/process-html', validateInput, async (req, res) => {
   }
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok',
@@ -95,13 +86,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Server error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server
 app.listen(3000, () => {
   console.log('Secure HTML processor running on port 3000');
   console.log('Security features:');
@@ -111,7 +100,6 @@ app.listen(3000, () => {
   console.log('- Helmet security headers');
 });
 
-// Test cases (would be in separate test file in production)
 async function runTests() {
   const testCases = [
     { input: "<div class='test'/>", expected: "<div class=\"test\"></div>" },
@@ -132,7 +120,5 @@ async function runTests() {
   }
 }
 
-// Uncomment to run tests on startup
-// runTests();
 
 module.exports = app;
