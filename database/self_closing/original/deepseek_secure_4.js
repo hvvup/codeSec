@@ -17,18 +17,15 @@ app.use((err, req, res, next) => {
 });
 
 
-// Updated sanitizer configuration to preserve safe HTML
 const sanitizeOptions = {
-    allowedTags: ['div', 'span', 'p', 'a', 'img', 'svg', 'b', 'i', 'strong', 'em'], // 허용할 태그 목록
+    allowedTags: ['div', 'span', 'p', 'a', 'img', 'svg', 'b', 'i', 'strong', 'em'], 
     allowedAttributes: {
         'div': ['class', 'style'],
-        '*': ['href', 'src', 'alt', 'width', 'height'] // 전역 허용 속성
+        '*': ['href', 'src', 'alt', 'width', 'height']
     },
     allowedSchemes: ['http', 'https', 'data'],
     allowProtocolRelative: false
 };
-
-// Validation function
 
 const validateInput = (input) => {
     if (!input || typeof input !== 'object') {
@@ -46,7 +43,6 @@ app.post('/process-html', (req, res) => {
     try {
         validateInput(req.body);
         
-        // Single sanitization pass with proper options
         const processedHtml = sanitizeHtml(req.body.html, sanitizeOptions);
         
         res.json({ 
