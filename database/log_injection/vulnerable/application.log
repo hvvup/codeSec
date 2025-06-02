@@ -1,0 +1,48 @@
+{"id":"147170e4-46e6-4cee-ab54-c53848521ba5","timestamp":"2025-06-01T08:14:01.901Z","level":"info","message":"Server started on port 3000","meta":{}}
+
+{"id":"b81c1660-dfc7-4f9a-a916-d04198664cbf","timestamp":"2025-06-01T08:14:05.054Z","level":"info","message":"Request received","meta":{}}
+
+{"id":"284238b0-c973-4fac-b095-142331254a58","timestamp":"2025-06-01T08:14:05.055Z","level":"info","message":"User input received","meta":{}}
+
+{"id":"3200be44-f5d3-4df5-be8c-f9517d02240d","timestamp":"2025-06-01T08:25:41.345Z","level":"info","message":"Server started on port 3000","meta":{}}
+{"id":"0fa37c62-64cf-46c6-83d0-d8a6bd41c3e0","timestamp":"2025-06-01T08:25:45.602Z","level":"info","message":"Request received","meta":{}}
+{"id":"938f071d-3651-446b-bbec-4f171b5d98e2","timestamp":"2025-06-01T08:25:45.603Z","level":"info","message":"User input received: This is a \n[yes!!!]test log entry","meta":{}}
+{"id":"2aa9acf3-278a-4560-81db-a2c430090e18","timestamp":"2025-06-01T08:26:46.450Z","level":"info","message":"Server started on port 3000","meta":{}}
+
+{"id":"70ff4512-828f-4726-971e-870688b302f1","timestamp":"2025-06-01T08:26:49.579Z","level":"info","message":"Request received: POST /log from ::ffff:127.0.0.1","meta":{}}
+
+{"id":"3a2f2ea0-296e-4f87-80b6-d8814e5b98b1","timestamp":"2025-06-01T08:26:49.581Z","level":"info","message":"User input: {\"input\":\"This is a \\n[yes!!!]test log entry\"}\nIP: ::ffff:127.0.0.1\nUser-Agent: vscode-restclient","meta":{}}
+
+{"id":"1e60501d-1bab-4133-a41d-2883f59d6833","timestamp":"2025-06-01T08:28:01.613Z","level":"info","message":"Server started on port 3000\n","meta":{}}
+
+{"id":"cc7148a8-ec09-4dda-aadd-8ca20564bea3","timestamp":"2025-06-01T08:28:06.254Z","level":"info","message":"Request received\n{\"method\":\"POST\",\"path\":\"/log\",\"ip\":\"::ffff:127.0.0.1\"}","meta":{}}
+
+{"id":"55a67ab9-edc5-42e2-92a1-759f7c4c0a76","timestamp":"2025-06-01T08:28:06.255Z","level":"info","message":"User input received\n{\"input\":{\"input\":\"This is a \\n[yes!!!]test log entry\"},\"ip\":\"::ffff:127.0.0.1\",\"userAgent\":\"vscode-restclient\"}","meta":{}}
+
+{"id":"8b573f46-aa6f-46de-b294-414baba0ad92","timestamp":"2025-06-01T08:28:23.806Z","level":"info","message":"Request received\n{\"method\":\"POST\",\"path\":\"/log\",\"ip\":\"::ffff:127.0.0.1\"}","meta":{}}
+
+{"id":"aea5ac0b-7e62-45d8-b14d-b9c0c8cda1a3","timestamp":"2025-06-01T08:28:23.807Z","level":"info","message":"User input received\n{\"input\":{\"input\":\"This is a \\n[no!!!]test log entry\"},\"ip\":\"::ffff:127.0.0.1\",\"userAgent\":\"vscode-restclient\"}","meta":{}}
+
+{"id":"25ecc950-f9da-4905-85f8-0337b1406ab5","timestamp":"2025-06-02T02:25:13.313Z","level":"info","message":"Server started on port 3000\n","meta":{}}
+
+{"id":"d191ef08-ccd4-4f7c-84a3-3c8ca3f4df63","timestamp":"2025-06-02T02:25:19.517Z","level":"info","message":"Request received\n{\"method\":\"POST\",\"path\":\"/log\",\"ip\":\"::ffff:127.0.0.1\"}","meta":{}}
+
+{"id":"237fff13-43a7-40d6-bd9e-dbebfc349f79","timestamp":"2025-06-02T02:25:19.519Z","level":"info","message":"User input received\n{\"input\":{\"input\":\"abc\\nterlim\"},\"ip\":\"::ffff:127.0.0.1\",\"userAgent\":\"vscode-restclient\"}","meta":{}}
+
+{"id":"07c42328-d5ae-422e-9e92-8e8bb8a6da28","timestamp":"2025-06-02T02:28:44.695Z","level":"info","message":"Server started on port 3000\n","meta":{}}
+
+{"id":"20e7de7d-f909-459b-954d-707db416f308","timestamp":"2025-06-02T02:28:52.889Z","level":"info","message":"Request received\n{\"method\":\"POST\",\"path\":\"/log\",\"ip\":\"::ffff:127.0.0.1\"}","meta":{}}
+
+{"id":"e87a0364-cdaf-4970-bdd7-f97970c24e6b","timestamp":"2025-06-02T02:28:52.891Z","level":"info","message":"User input received\nabc\nterlim","meta":{}}
+
+{"id":"8bab2dae-76cd-4000-8e8e-feaab3d1baac","timestamp":"2025-06-02T02:31:13.065Z","level":"info","message":"Request received\n{\"method\":\"POST\",\"path\":\"/log\",\"ip\":\"::ffff:127.0.0.1\"}","meta":{}}
+
+{"id":"142bf24a-5ce4-4b07-ab04-843742dbe567","timestamp":"2025-06-02T02:31:13.066Z","level":"info","message":"User input received\nabc\n[log injection]this function is injected","meta":{}}
+
+2025-06-02T02:34:45.641Z info: Server started on port 3000
+
+2025-06-02T02:34:50.474Z info: Request received - Method: POST Path: /log IP: ::ffff:127.0.0.1
+
+2025-06-02T02:34:50.475Z info: User input - IP: ::ffff:127.0.0.1 Input: abc
+[log injection]this function is injected
+
