@@ -2,13 +2,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cheerio = require('cheerio');
 const xss = require('xss');
-const fs = require('fs');
-const path = require('path');
+
 
 const app = express();
 const port = 3000;
 
-const logFile = path.join(__dirname, 'html-log.json');
 
 app.use(bodyParser.json());
 
@@ -42,13 +40,7 @@ function expandHtmlSafely(inputHtml) {
   return $('body').html() || $.html();
 }
 
-function logSecurely(data) {
-  const entry = {
-    timestamp: new Date().toISOString(),
-    log: data
-  };
-  fs.appendFileSync(logFile, JSON.stringify(entry) + '\n', 'utf8');
-}
+
 
 app.post('/expand', (req, res) => {
   try {
@@ -59,15 +51,13 @@ app.post('/expand', (req, res) => {
     }
 
     const result = expandHtmlSafely(input);
-    logSecurely({ input, result });
 
     res.json({ result });
   } catch (err) {
-    logSecurely({ error: err.message });
     res.status(500).json({ error: 'Server error occurred' });
   }
 });
 
 app.listen(port, () => {
-  console.log(`Secure HTML Expansion Server running on port ${port}`);
+  // console.log(`Secure HTML Expansion Server running on port ${port}`);
 });

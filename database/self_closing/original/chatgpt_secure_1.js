@@ -2,15 +2,12 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { JSDOM } = require('jsdom');
 const sanitizeHtml = require('sanitize-html');
-const pino = require('pino');
-const fs = require('fs');
-const path = require('path');
+
 
 const app = express();
 const port = 3000;
 
-const logPath = path.join(__dirname, 'html-expand-log.json');
-const logger = pino(pino.destination(logPath));
+
 
 app.use(bodyParser.json());
 
@@ -42,15 +39,13 @@ app.post('/expand', (req, res) => {
     }
 
     const expandedHtml = expandHtmlSafely(inputHtml);
-    logger.info({ timestamp: new Date().toISOString(), input: inputHtml, output: expandedHtml });
 
     res.json({ result: expandedHtml });
   } catch (err) {
-    logger.error({ timestamp: new Date().toISOString(), error: err.message });
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
 
 app.listen(port, () => {
-  console.log(`Secure HTML Expansion Server running on port ${port}`);
+  // console.log(`Secure HTML Expansion Server running on port ${port}`);
 });
