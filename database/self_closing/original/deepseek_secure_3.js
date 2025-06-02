@@ -4,16 +4,13 @@ const { JSDOM } = require('jsdom');
 const createDOMPurify = require('dompurify');
 const helmet = require('helmet');
 
-// Initialize Express app with security middleware
 const app = express();
 app.use(helmet());
 app.use(bodyParser.json({ limit: '10kb' }));
 
-// Create DOMPurify instance
 const window = new JSDOM('').window;
 const DOMPurify = createDOMPurify(window);
 
-// Configuration for HTML processing
 const sanitizeConfig = {
   ALLOWED_TAGS: ['div', 'span', 'p', 'a', 'ul', 'ol', 'li', 'br', 'img'],
   ALLOWED_ATTR: ['class', 'style', 'href', 'src', 'alt'],
@@ -25,9 +22,9 @@ const sanitizeConfig = {
   ADD_TAGS: []
 };
 
-// Custom processor to expand self-closing tags
 function processHtml(html) {
   const cleanHtml = DOMPurify.sanitize(html, sanitizeConfig);
+
   const dom = new JSDOM(cleanHtml);
   const document = dom.window.document;
 
@@ -45,9 +42,11 @@ function processHtml(html) {
     if (el.outerHTML.endsWith('/>') &&
         !['br', 'img', 'hr', 'input'].includes(el.tagName.toLowerCase())) {
       const newEl = document.createElement(el.tagName);
+
       Array.from(el.attributes).forEach(attr => {
         newEl.setAttribute(attr.name, attr.value);
       });
+
       el.parentNode.replaceChild(newEl, el);
     }
   });
@@ -55,7 +54,6 @@ function processHtml(html) {
   return document.body.innerHTML;
 }
 
-// Validation middleware
 function validateInput(req, res, next) {
   if (!req.body || typeof req.body.html !== 'string') {
     return res.status(400).json({ error: 'Invalid input format' });
@@ -66,7 +64,6 @@ function validateInput(req, res, next) {
   next();
 }
 
-// Main endpoint
 app.post('/process-html', validateInput, (req, res) => {
   try {
     const processed = processHtml(req.body.html);
@@ -76,7 +73,6 @@ app.post('/process-html', validateInput, (req, res) => {
   }
 });
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -88,12 +84,10 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// Start server
 app.listen(3000, () => {
   console.log('Secure HTML processor running on port 3000');
 });

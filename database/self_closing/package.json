@@ -11,6 +11,7 @@
   "description": "",
   "dependencies": {
     "body-parser": "^2.2.0",
+    "cheerio": "^1.0.0",
     "dom-serializer": "^2.0.0",
     "domhandler": "^5.0.3",
     "dompurify": "^3.2.6",
@@ -22,6 +23,12 @@
     "moran": "^0.0.11",
     "morgan": "^1.10.0",
     "rehype": "^13.0.2",
+<<<<<<< HEAD
     "sanitize-html": "^2.17.0"
+=======
+    "rehype-sanitize": "^6.0.0",
+    "sanitize-html": "^2.17.0",
+    "xss": "^1.0.15"
+>>>>>>> fe2ab1fd1e8d20e2deb04a039c222e2b46606ac4
   }
 }

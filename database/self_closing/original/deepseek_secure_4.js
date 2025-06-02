@@ -9,13 +9,13 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 app.use(bodyParser.json({ limit: '10kb' }));
 
-// Error handler middleware
 app.use((err, req, res, next) => {
     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
         return res.status(400).json({ error: 'Invalid JSON payload' });
     }
     next();
 });
+
 
 // Updated sanitizer configuration to preserve safe HTML
 const sanitizeOptions = {
@@ -29,6 +29,7 @@ const sanitizeOptions = {
 };
 
 // Validation function
+
 const validateInput = (input) => {
     if (!input || typeof input !== 'object') {
         throw new Error('Invalid input: expected object');

@@ -1,68 +1,63 @@
-// secure-html-server-v3.js
+// secure-html-server-v4.js
 const express = require('express');
 const bodyParser = require('body-parser');
-const fs = require('fs');
-const path = require('path');
-const rehype = require('rehype');
-const rehypeParse = require('rehype-parse');
-const rehypeStringify = require('rehype-stringify');
-const rehypeSanitize = require('rehype-sanitize');
-const unified = require('unified');
+const { JSDOM } = require('jsdom');
+const createDOMPurify = require('dompurify');
+const parse5 = require('parse5');
 
 const app = express();
 const port = 3000;
 
-const logPath = path.join(__dirname, 'html_secure_log.json');
 
-// 미들웨어
+// JSON 파싱 미들웨어
 app.use(bodyParser.json());
 
-// HTML 확장 및 보안 처리
-async function expandHtmlSafely(inputHtml) {
-  const processor = unified()
-    .use(rehypeParse, { fragment: true })
-    .use(rehypeSanitize, {
-      tagNames: ['div', 'span', 'p', 'b', 'i'],
-      attributes: {
-        '*': ['class', 'id', 'style']
-      }
-    })
-    .use(rehypeStringify, { closeSelfClosing: true });
+/**
+ * HTML을 안전하게 확장 및 정화
+ */
+function expandHtmlSafely(rawHtml) {
+  const window = new JSDOM('').window;
+  const DOMPurify = createDOMPurify(window);
 
-  const file = await processor.process(inputHtml);
-  return String(file);
+  // XSS 방지
+  const sanitized = DOMPurify.sanitize(rawHtml, {
+    ALLOWED_TAGS: ['div', 'span', 'p', 'b', 'i'],
+    ALLOWED_ATTR: ['class', 'id', 'style']
+  });
+
+  // parse5는 self-closing 태그를 자동으로 open-close로 변환
+  const parsed = parse5.parseFragment(sanitized);
+  const serializer = new parse5.SerializerStream(parsed);
+  
+  return new Promise((resolve, reject) => {
+    let htmlResult = '';
+    serializer.on('data', chunk => (htmlResult += chunk));
+    serializer.on('end', () => resolve(htmlResult));
+    serializer.on('error', err => reject(err));
+  });
 }
 
-// 보안 로그 기록 함수
-function logSecurely(data) {
-  const entry = {
-    timestamp: new Date().toISOString(),
-    log: data
-  };
-  fs.appendFileSync(logPath, JSON.stringify(entry) + '\n', 'utf8');
-}
+
+
 
 // POST 요청 처리
 app.post('/expand', async (req, res) => {
+  const inputHtml = req.body.html;
+
+  if (typeof inputHtml !== 'string') {
+    res.status(400).json({ error: 'Invalid input: html must be a string' });
+    return;
+  }
+
   try {
-    const htmlInput = req.body.html;
-
-    if (typeof htmlInput !== 'string') {
-      res.status(400).json({ error: 'Invalid input type' });
-      return;
-    }
-
-    const outputHtml = await expandHtmlSafely(htmlInput);
-    logSecurely({ input: htmlInput, result: outputHtml });
-
-    res.json({ result: outputHtml });
-  } catch (error) {
-    logSecurely({ error: error.message });
-    res.status(500).json({ error: 'Processing failed' });
+    const result = await expandHtmlSafely(inputHtml);
+    res.json({ result });
+  } catch (err) {
+    res.status(500).json({ error: 'HTML processing failed' });
   }
 });
 
-// 서버 시작
+// 서버 실행
 app.listen(port, () => {
-  console.log(`Secure HTML Server running on port ${port}`);
+  // console.log(`Secure HTML Expansion Server listening on port ${port}`);
 });

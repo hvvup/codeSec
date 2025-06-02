@@ -1,9 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const { parse, serialize } = require('parse5');
-const morgan = require('morgan');
 const helmet = require('helmet');
-const { createWriteStream } = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
@@ -12,11 +10,6 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 app.disable('x-powered-by');
 
-const accessLogStream = createWriteStream('secure-html-processing.log', { flags: 'a' });
-app.use(morgan('tiny', {
-    stream: accessLogStream,
-    skip: (req) => req.method === 'OPTIONS'
-}));
 
 app.use(bodyParser.json({
     limit: '10kb',
@@ -63,7 +56,6 @@ app.post('/', (req, res) => {
             requestId: req.id
         });
     } catch (error) {
-        console.error(`[${req.id}] Error: ${error.message}`);
         res.status(400).json({ 
             error: error.message,
             requestId: req.id
@@ -79,7 +71,6 @@ app.get('/health', (req, res) => {
 });
 
 app.use((err, req, res, next) => {
-    console.error(`[${req.id}] Server Error:`, err.message);
     res.status(500).json({ 
         error: 'Internal Server Error',
         requestId: req.id
@@ -87,12 +78,11 @@ app.use((err, req, res, next) => {
 });
 
 const server = app.listen(PORT, () => {
-    console.log(`Secure HTML processor running on port ${PORT}`);
+    // console.log(`Secure HTML processor running on port ${PORT}`);
 });
 
 process.on('SIGTERM', () => {
     server.close(() => {
-        console.log('Server shutdown complete');
         process.exit(0);
     });
 });

@@ -7,17 +7,13 @@ const createDOMPurify = require('dompurify');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Apply security-related HTTP headers
 app.use(helmet());
 
-// Parse JSON body with size limit
 app.use(bodyParser.json({ limit: '10kb' }));
 
-// Set up DOMPurify with jsdom window
 const window = new JSDOM('').window;
 const DOMPurify = createDOMPurify(window);
 
-// Function to sanitize and expand HTML safely
 function sanitizeAndExpandHtml(html) {
     const sanitized = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } });
     const dom = new JSDOM(`<body>${sanitized}</body>`);
@@ -25,7 +21,6 @@ function sanitizeAndExpandHtml(html) {
     return expanded;
 }
 
-// POST endpoint to handle HTML input
 app.post('/expand', (req, res) => {
     const inputHtml = req.body.html;
 
@@ -45,12 +40,10 @@ app.post('/expand', (req, res) => {
     }
 });
 
-// Fallback for undefined routes
 app.use((req, res) => {
     res.status(404).json({ error: 'Not found' });
 });
 
-// Handle unexpected errors gracefully
 process.on('uncaughtException', (err) => {
     console.error('Unhandled Exception:', err);
     process.exit(1);
@@ -61,7 +54,6 @@ process.on('unhandledRejection', (reason, promise) => {
     process.exit(1);
 });
 
-// Start the Express server
 app.listen(PORT, () => {
     console.log(`Server 2 (with dompurify) running securely on port ${PORT}`);
 });

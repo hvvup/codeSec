@@ -1,0 +1,16 @@
+{"level":30,"time":1748857306833,"pid":4984,"hostname":"hwijungcho","timestamp":"2025-06-02T09:41:46.832Z","input":"<div class='test'/>","output":"<div class=\"test\"></div>"}
+{"level":30,"time":1748857313431,"pid":4984,"hostname":"hwijungcho","timestamp":"2025-06-02T09:41:53.431Z","input":"<div class='test\" onmouseover=\"alert(1)'/>","output":"<div class=\"test&quot; onmouseover=&quot;alert(1)\"></div>"}
+{"level":30,"time":1748857451682,"pid":38072,"hostname":"hwijungcho","timestamp":"2025-06-02T09:44:11.681Z","input":"<img src='x' onerror='alert(1)'/>","output":""}
+{"level":30,"time":1748857453786,"pid":38072,"hostname":"hwijungcho","timestamp":"2025-06-02T09:44:13.786Z","input":"<div class='test\" onmouseover=\"alert(1)'/>","output":"<div class=\"test&quot; onmouseover=&quot;alert(1)\"></div>"}
+{"level":30,"time":1748857468722,"pid":38072,"hostname":"hwijungcho","timestamp":"2025-06-02T09:44:28.722Z","input":"<img src='x' onerror='alert(1)'/>","output":""}
+{"level":30,"time":1748857471577,"pid":38072,"hostname":"hwijungcho","timestamp":"2025-06-02T09:44:31.577Z","input":"<div class='test'/>","output":"<div class=\"test\"></div>"}
+{"level":30,"time":1748857476041,"pid":38072,"hostname":"hwijungcho","timestamp":"2025-06-02T09:44:36.041Z","input":"<span class='highlight'/>","output":"<span class=\"highlight\"></span>"}
+{"level":30,"time":1748857479832,"pid":38072,"hostname":"hwijungcho","timestamp":"2025-06-02T09:44:39.832Z","input":"<img src='x' onerror='alert(1)'/>","output":""}
+{"level":30,"time":1748857491380,"pid":38072,"hostname":"hwijungcho","timestamp":"2025-06-02T09:44:51.380Z","input":"<div class='test\" onmouseover=\"alert(1)'/>","output":"<div class=\"test&quot; onmouseover=&quot;alert(1)\"></div>"}
+{"level":30,"time":1748857677757,"pid":38196,"hostname":"hwijungcho","timestamp":"2025-06-02T09:47:57.756Z","input":"<div class='test'/>","output":"<div class=\"test\"></div>"}
+{"level":30,"time":1748857682431,"pid":38196,"hostname":"hwijungcho","timestamp":"2025-06-02T09:48:02.431Z","input":"<img src='x' onerror='alert(1)'/>","output":""}
+{"level":30,"time":1748857683878,"pid":38196,"hostname":"hwijungcho","timestamp":"2025-06-02T09:48:03.878Z","input":"<div class='test\" onmouseover=\"alert(1)'/>","output":"<div class=\"test&quot; onmouseover=&quot;alert(1)\"></div>"}
+{"level":30,"time":1748857697426,"pid":38196,"hostname":"hwijungcho","timestamp":"2025-06-02T09:48:17.426Z","input":"<div class='test\" onmouseover=\"alert(1)'/>","output":"<div class=\"test&quot; onmouseover=&quot;alert(1)\"></div>"}
+{"level":30,"time":1748857702714,"pid":38196,"hostname":"hwijungcho","timestamp":"2025-06-02T09:48:22.714Z","input":"<span class='highlight'/>","output":"<span class=\"highlight\"></span>"}
+{"level":30,"time":1748858405872,"pid":38360,"hostname":"hwijungcho","timestamp":"2025-06-02T10:00:05.871Z","input":"<img src='x' onerror='alert(1)'/>","output":""}
+{"level":30,"time":1748858409096,"pid":38360,"hostname":"hwijungcho","timestamp":"2025-06-02T10:00:09.096Z","input":"<div class='test'/>","output":"<div class=\"test\"></div>"}
