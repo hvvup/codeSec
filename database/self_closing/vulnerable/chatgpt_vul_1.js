@@ -20,9 +20,7 @@ app.post('/submit', (req, res) => {
   res.json({ message: 'Input logged successfully' });
 });
 
-app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
-});
+
 
 function generateRandomString(length) {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -47,4 +45,8 @@ app.post('/process', (req, res) => {
 
   const processed = mockProcessData(data);
   res.json({ result: processed });
+});
+
+app.listen(port, () => {
+  // console.log(`Server running on port ${port}`);
 });

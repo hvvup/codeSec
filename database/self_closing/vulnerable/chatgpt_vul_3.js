@@ -20,9 +20,9 @@ function dangerouslyExpandTags(html) {
 }
 
 app.post('/convert', (req, res) => {
-  const { html } = req.body;
+  const html = req.body?.html;
 
-  if (typeof html !== 'string') {
+  if (!html || typeof html !== 'string' || html.trim() === '') {
     res.status(400).json({ error: 'Invalid input: html must be a string' });
     return;
   }
@@ -31,7 +31,7 @@ app.post('/convert', (req, res) => {
     const result = dangerouslyExpandTags(html);
     res.json({ expanded: result });
   } catch {
-    res.status(500).json({ error: 'Processing failed' });
+    res.status(500).json({ error: 'Processing failed', details: err.message });
   }
 });
 

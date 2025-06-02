@@ -1,63 +1,49 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const cheerio = require('cheerio');
-const xss = require('xss');
-
+const { JSDOM } = require('jsdom');
+const createDOMPurify = require('dompurify');
+const parse5 = require('parse5');
 
 const app = express();
 const port = 3000;
 
-
 app.use(bodyParser.json());
 
-function expandHtmlSafely(inputHtml) {
-  const cleanHtml = xss(inputHtml, {
-    whiteList: {
-      div: ['class', 'id', 'style'],
-      span: ['class', 'id', 'style'],
-      p: ['class', 'id', 'style'],
-      b: [], i: []
-    },
-    stripIgnoreTag: true
+function expandHtmlSafely(html) {
+  const { window } = new JSDOM('');
+  const DOMPurify = createDOMPurify(window);
+
+  const sanitized = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['div', 'span', 'p', 'b', 'i'],
+    ALLOWED_ATTR: ['class', 'id', 'style']
   });
 
-  const $ = cheerio.load(cleanHtml, { xmlMode: false });
+  const fragment = parse5.parseFragment(sanitized);
+  const stream = new parse5.SerializerStream(fragment);
 
-  $('*').each(function () {
-    const tag = $(this)[0];
-    if (tag && tag.type === 'tag' && !tag.children.length && !$(this).html()) {
-      const html = $.html(this);
-      if (html.endsWith('/>')) {
-        const tagName = tag.name;
-        const attrs = Object.entries(tag.attribs)
-          .map(([key, val]) => `${key}="${val}"`)
-          .join(' ');
-        $(this).replaceWith(`<${tagName} ${attrs}></${tagName}>`);
-      }
-    }
+  return new Promise((resolve, reject) => {
+    let result = '';
+    stream.on('data', chunk => result += chunk);
+    stream.on('end', () => resolve(result));
+    stream.on('error', err => reject(err));
   });
-
-  return $('body').html() || $.html();
 }
 
 
+app.post('/expand', async (req, res) => {
+  const html = req.body.html;
 
-app.post('/expand', (req, res) => {
+  if (typeof html !== 'string') {
+    res.status(400).json({ error: 'Invalid input format' });
+    return;
+  }
+
   try {
-    const input = req.body.html;
-    if (typeof input !== 'string') {
-      res.status(400).json({ error: 'Invalid HTML input' });
-      return;
-    }
-
-    const result = expandHtmlSafely(input);
-
+    const result = await expandHtmlSafely(html);
     res.json({ result });
-  } catch (err) {
-    res.status(500).json({ error: 'Server error occurred' });
+  } catch (error) {
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
-app.listen(port, () => {
-  // console.log(`Secure HTML Expansion Server running on port ${port}`);
-});
+app.listen(port);

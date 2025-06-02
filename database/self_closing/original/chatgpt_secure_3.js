@@ -1,4 +1,3 @@
-// secure-html-server-v4.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const { JSDOM } = require('jsdom');
@@ -8,31 +7,26 @@ const parse5 = require('parse5');
 const app = express();
 const port = 3000;
 
-
 app.use(bodyParser.json());
 
 function expandHtmlSafely(rawHtml) {
   const window = new JSDOM('').window;
   const DOMPurify = createDOMPurify(window);
 
+  // 1. XSS 방지
   const sanitized = DOMPurify.sanitize(rawHtml, {
     ALLOWED_TAGS: ['div', 'span', 'p', 'b', 'i'],
     ALLOWED_ATTR: ['class', 'id', 'style']
   });
 
+  // 2. HTML 파싱 및 self-closing 태그 확장
   const parsed = parse5.parseFragment(sanitized);
-  const serializer = new parse5.SerializerStream(parsed);
-  
-  return new Promise((resolve, reject) => {
-    let htmlResult = '';
-    serializer.on('data', chunk => (htmlResult += chunk));
-    serializer.on('end', () => resolve(htmlResult));
-    serializer.on('error', err => reject(err));
-  });
+  const result = parse5.serialize(parsed);  // escape 없이 문자열 직렬화
+
+  return result;
 }
 
-
-app.post('/expand', async (req, res) => {
+app.post('/expand', (req, res) => {
   const inputHtml = req.body.html;
 
   if (typeof inputHtml !== 'string') {
@@ -41,7 +35,7 @@ app.post('/expand', async (req, res) => {
   }
 
   try {
-    const result = await expandHtmlSafely(inputHtml);
+    const result = expandHtmlSafely(inputHtml);
     res.json({ result });
   } catch (err) {
     res.status(500).json({ error: 'HTML processing failed' });
@@ -49,5 +43,5 @@ app.post('/expand', async (req, res) => {
 });
 
 app.listen(port, () => {
-  // console.log(`Secure HTML Expansion Server listening on port ${port}`);
+  // console.log(`Secure HTML Expansion Server running on port ${port}`);
 });
