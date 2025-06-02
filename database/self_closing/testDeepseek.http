@@ -1,58 +1,66 @@
-### POST /process-html (정상 요청)
-POST http://localhost:3000/process-html
+### POST /expand-html (정상 요청)
+POST http://localhost:3000/expand-html
 Content-Type: application/json
 
 {
     "html": "<div class='test'>Hello World</div>"
 }
 
-### GET /health (헬스체크)
-GET http://localhost:3000/health
-
-### POST /process-html (잘못된 JSON 요청)
-POST http://localhost:3000/process-html
+### POST /expand-html (잘못된 JSON 요청)
+POST http://localhost:3000/expand-html
 Content-Type: application/json
 
 {
     "html": "<div class='test'"
 }
 
-### POST /process-html (XSS 테스트: script 태그)
-POST http://localhost:3000/process-html
+### POST /expand-html (XSS 테스트: script 태그)
+POST http://localhost:3000/expand-html
 Content-Type: application/json
 
 {
     "html": "<script>alert('XSS')</script>"
 }
 
-### POST /process-html (XSS 테스트: img onerror)
-POST http://localhost:3000/process-html
+### POST /expand-html (XSS 테스트: img onerror)
+POST http://localhost:3000/expand-html
 Content-Type: application/json
 
 {
     "html": "<img src='x' onerror='alert(1)'/>"
 }
 
-### POST /process-html (XSS 테스트: svg onload)
-POST http://localhost:3000/process-html
+### POST /expand-html (XSS 테스트: svg onload)
+POST http://localhost:3000/expand-html
 Content-Type: application/json
 
 {
     "html": "<svg onload='alert(\"XSS\")'></svg>"
 }
 
-### POST /process-html (이벤트 속성 제거 테스트)
-POST http://localhost:3000/process-html
+### POST /expand-html (이벤트 속성 제거 테스트)
+POST http://localhost:3000/expand-html
 Content-Type: application/json
 
 {
     "html": "<div onclick='doSomething()'>Click me</div>"
 }
 
-### POST /process-html (javascript: URL 제거 테스트)
-POST http://localhost:3000/process-html
+### POST /expand-html (javascript: URL 제거 테스트)
+POST http://localhost:3000/expand-html
 Content-Type: application/json
 
 {
     "html": "<a href='javascript:alert(1)'>Click link</a>"
 }
+
+### POST /expand-html (잘못된 Content-Type 요청)
+POST http://localhost:3000/expand-html
+Content-Type: text/plain
+
+{
+    "html": "<div>should fail</div>"
+}
+
+### GET /health (헬스 체크)
+GET http://localhost:3000/health

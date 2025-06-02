@@ -3,13 +3,11 @@ const bodyParser = require('body-parser');
 const { JSDOM } = require('jsdom');
 const createDOMPurify = require('dompurify');
 const helmet = require('helmet');
-const morgan = require('morgan');
 
 // Initialize Express app with security middleware
 const app = express();
 app.use(helmet());
 app.use(bodyParser.json({ limit: '10kb' }));
-app.use(morgan('combined'));
 
 // Create DOMPurify instance
 const window = new JSDOM('').window;
@@ -29,39 +27,31 @@ const sanitizeConfig = {
 
 // Custom processor to expand self-closing tags
 function processHtml(html) {
-  // First sanitize with DOMPurify
   const cleanHtml = DOMPurify.sanitize(html, sanitizeConfig);
-  
-  // Parse into DOM for proper handling
   const dom = new JSDOM(cleanHtml);
   const document = dom.window.document;
-  
-  // Process all elements to expand self-closing tags
+
   const walker = document.createTreeWalker(
     document.body,
     dom.window.NodeFilter.SHOW_ELEMENT
   );
-  
+
   const elements = [];
   while (walker.nextNode()) {
     elements.push(walker.currentNode);
   }
-  
+
   elements.forEach(el => {
-    if (el.outerHTML.endsWith('/>') && 
+    if (el.outerHTML.endsWith('/>') &&
         !['br', 'img', 'hr', 'input'].includes(el.tagName.toLowerCase())) {
       const newEl = document.createElement(el.tagName);
-      
-      // Copy attributes
       Array.from(el.attributes).forEach(attr => {
         newEl.setAttribute(attr.name, attr.value);
       });
-      
-      // Replace with expanded version
       el.parentNode.replaceChild(newEl, el);
     }
   });
-  
+
   return document.body.innerHTML;
 }
 
@@ -81,38 +71,31 @@ app.post('/process-html', validateInput, (req, res) => {
   try {
     const processed = processHtml(req.body.html);
     res.json({ result: processed });
-  } catch (err) {
-    console.error('Processing error:', err);
+  } catch {
     res.status(500).json({ error: 'HTML processing failed' });
   }
 });
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     security: {
       xssProtection: true,
       tagExpansion: true,
       inputValidation: true
-    } 
+    }
   });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Server error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
 // Start server
 app.listen(3000, () => {
   console.log('Secure HTML processor running on port 3000');
-  console.log('Security features:');
-  console.log('- DOMPurify XSS protection');
-  console.log('- Self-closing tag expansion');
-  console.log('- Input size limits (10KB)');
-  console.log('- Helmet security headers');
 });
 
 module.exports = app;

@@ -1,9 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-const sanitizeHtml = require('sanitize-html');
 const helmet = require('helmet');
-const morgan = require('morgan');
-const { createWriteStream } = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,48 +8,12 @@ const PORT = process.env.PORT || 3000;
 app.use(helmet());
 app.use(bodyParser.json({ limit: '10kb' }));
 
-const accessLogStream = createWriteStream('access.log', { flags: 'a' });
-app.use(morgan('combined', { 
-    stream: accessLogStream,
-    skip: (req) => req.method === 'OPTIONS'
-}));
-
 app.use((err, req, res, next) => {
     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
         return res.status(400).json({ error: 'Invalid JSON payload' });
     }
     next();
 });
-
-const sanitizeOptions = {
-    allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img', 'svg']),
-    allowedAttributes: {
-        '*': ['class', 'style', 'src'],
-        img: ['src', 'alt', 'width', 'height'],
-        svg: ['width', 'height', 'viewbox']
-    },
-    allowedSchemes: ['http', 'https', 'data'],
-    allowProtocolRelative: false,
-    enforceHtmlBoundary: true,
-    selfClosing: [],
-    exclusiveFilter: (frame) => {
-        if (frame.attribs) {
-            Object.keys(frame.attribs).forEach(attr => {
-                if (attr.startsWith('on') || 
-                    (attr === 'src' && frame.attribs[attr].startsWith('javascript:')) ||
-                    (attr === 'href' && frame.attribs[attr].startsWith('javascript:'))) {
-                    delete frame.attribs[attr];
-                }
-            });
-        }
-        
-        if (frame.isSelfClosing) {
-            frame.tag = frame.tag + '></' + frame.tag;
-            frame.isSelfClosing = false;
-        }
-        return false;
-    }
-};
 
 const validateInput = (input) => {
     if (!input || typeof input !== 'object') {
@@ -69,18 +30,18 @@ const validateInput = (input) => {
 app.post('/process-html', (req, res) => {
     try {
         validateInput(req.body);
-
-        const processedHtml = sanitizeHtml(req.body.html, sanitizeOptions);
-
-        console.log('HTML processed with security checks');
+        
+        let processedHtml = req.body.html;
+        processedHtml = processedHtml.replace(/<([a-zA-Z]+)([^>]*)\/>/g, '<$1$2></$1>');
         
         res.json({ 
             result: processedHtml 
         });
     } catch (error) {
-        console.error('Security error:', error.message);
+        console.error('Error:', error.message);
         res.status(400).json({ 
-            error: 'HTML processing failed due to security constraints' 
+            error: 'HTML processing failed',
+            details: error.message
         });
     }
 });
@@ -94,8 +55,7 @@ app.use((req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Secure server running on port ${PORT}`);
-    console.log('All security measures enabled');
+    console.log(`Server running on port ${PORT}`);
 });
 
 module.exports = app;
