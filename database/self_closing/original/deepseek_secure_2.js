@@ -19,14 +19,9 @@ async function expandHtmlSafely(rawHtml) {
   });
 
   const fragment = parse5.parseFragment(sanitized);
-  const serializer = new parse5.SerializerStream({ childNodes: fragment.childNodes });
+  const result = parse5.serialize({ childNodes: fragment.childNodes });
 
-  return new Promise((resolve, reject) => {
-    let htmlResult = '';
-    serializer.on('data', chunk => htmlResult += chunk);
-    serializer.on('end', () => resolve(htmlResult));
-    serializer.on('error', err => reject(err));
-  });
+  return result
 }
 
 
