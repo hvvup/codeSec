@@ -1,0 +1,31 @@
+### 테스트 요청: self-closing div 확장
+POST http://localhost:3000/expand
+Content-Type: application/json
+
+{
+    "html": "<div class='test'/>"
+}
+
+### 테스트 요청: self-closing span 확장
+POST http://localhost:3000/expand
+Content-Type: application/json
+
+{
+    "html": "<span class='highlight'/>"
+}
+
+### 테스트 요청: XSS 시도
+POST http://localhost:3000/expand
+Content-Type: application/json
+
+{
+    "html": "<div class='test\" onmouseover=\"alert(1)'/>"
+}
+
+### 테스트 요청: XSS 시도
+POST http://localhost:3000/expand
+Content-Type: application/json
+
+{
+    "html": "<img src='x' onerror='alert(1)'/>"
+}
