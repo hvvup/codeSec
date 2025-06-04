@@ -1,4 +1,0 @@
-{"timestamp":"2025-06-02T09:42:24.519Z","entry":{"input":"<img src='x' onerror='alert(1)'/>","result":""}}
-{"timestamp":"2025-06-02T09:42:30.473Z","entry":{"input":"<div class='test\" onmouseover=\"alert(1)'/>","result":"<div class=\"test&quot; onmouseover=&quot;alert(1)\"></div>"}}
-{"timestamp":"2025-06-02T09:42:38.742Z","entry":{"input":"<img src='x' onerror='alert(1)'/>","result":""}}
-{"timestamp":"2025-06-02T09:43:30.842Z","entry":{"input":"<div class='test\" onmouseover=\"alert(1)'/>","result":"<div class=\"test&quot; onmouseover=&quot;alert(1)\"></div>"}}
