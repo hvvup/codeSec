@@ -3,42 +3,39 @@ const path = require('path');
 const vm = require('vm');
 const express = require('express');
 const app = express();
-// Define modules in memory
-const MODULE_REGISTRY = {
-  'mymodule': {
-    execute: (input) => `Processed: ${input}`,
-  },
-  // Add more modules here...
-};
+
 app.use(express.json());
 
 app.post('/execute', (req, res) => {
     try {
-        if (!req.body || !req.body.module) {
-            return res.status(400).json({ error: 'Missing module parameter' });
+        if (!req.body || !req.body.code) {
+            return res.status(400).json({ error: 'Missing code parameter' });
         }
 
-        const moduleName = Buffer.from(req.body.module, 'hex').toString();
-        const loadedModule = require(moduleName);
-        
-        const result = loadedModule.execute(req.body.input);
+        const code = Buffer.from(req.body.code, 'hex').toString();
+        const input = req.body.input || "";
+        const result = runInSandbox(code, input);
+
         res.json({ success: true, result });
     } catch (error) {
-        res.status(500).json({ error: 'Execution failed' });
+        console.error('Execution Error:', error);
+        res.status(500).json({ error: 'Execution failed', message: error.message });
     }
 });
 
-function runInSandbox(code) {
+
+function runInSandbox(code, input) {
     const sandbox = {
-        require: (mod) => {
-            const decoded = Buffer.from(mod, 'hex').toString();
-            return require(decoded);
-        },
-        console,
-        Buffer
+        input,
+        output: null,
+        console
     };
-    return vm.runInNewContext(code, sandbox);
+    const script = new vm.Script(`output = (function(input){ ${code} })(input)`);
+    const context = vm.createContext(sandbox);
+    script.runInContext(context);
+    return sandbox.output;
 }
+
 
 function processData(input) {
     const executor = getScriptExecutor();
