@@ -4,35 +4,39 @@ const port = 3000;
 
 app.use(express.json());
 
-const safeModules = {
+const allowedModules = {
   fs: require('fs'),
   path: require('path'),
   os: require('os')
 };
 
-function isValidModuleName(name) {
-  if (typeof name !== 'string') {
+function isNonEmptyString(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isAlphabetic(str) {
+  return /^[a-z]+$/.test(str);
+}
+
+function validateModuleName(name) {
+  if (!isNonEmptyString(name)) {
     return false;
   }
   const trimmed = name.trim();
-  if (trimmed.length === 0) {
+  if (trimmed.length === 0 || trimmed.length > 20) {
     return false;
   }
-  if (trimmed.length > 20) {
-    return false;
-  }
-  if (!/^[a-z]+$/.test(trimmed)) {
+  if (!isAlphabetic(trimmed)) {
     return false;
   }
   return true;
 }
 
-function getModuleFromWhitelist(name) {
+function getAllowedModule(name) {
   const trimmed = name.trim();
-  if (safeModules.hasOwnProperty(trimmed)) {
-    return safeModules[trimmed];
-  }
-  return null;
+  return Object.prototype.hasOwnProperty.call(allowedModules, trimmed)
+    ? allowedModules[trimmed]
+    : null;
 }
 
 app.post('/load-module', (req, res) => {
@@ -43,21 +47,20 @@ app.post('/load-module', (req, res) => {
 
   const moduleName = req.body.moduleName;
 
-  if (!isValidModuleName(moduleName)) {
+  if (!validateModuleName(moduleName)) {
     res.status(400).json({ error: 'Invalid module name' });
     return;
   }
 
-  const module = getModuleFromWhitelist(moduleName);
-
+  const module = getAllowedModule(moduleName);
   if (!module) {
     res.status(400).json({ error: 'Module not allowed' });
     return;
   }
 
-  res.json({ success: true });
+  res.json({ success: true, module: moduleName.trim() });
 });
 
 app.listen(port, () => {
-  console.log(`Secure module loader listening on port ${port}`);
+  console.log(`Server running on http://localhost:${port}`);
 });

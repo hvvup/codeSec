@@ -1,0 +1,77 @@
+### ✅ 정상 요청 - 허용된 모듈 (fs)
+POST http://localhost:3000/load-module
+Content-Type: application/json
+
+{
+  "moduleName": "fs"
+}
+
+###
+
+### ✅ 정상 요청 - 허용된 모듈 (path)
+POST http://localhost:3000/load-module
+Content-Type: application/json
+
+{
+  "moduleName": "path"
+}
+
+###
+
+### ❌ CWE-506 테스트용 악의적 요청 - hex 인코딩 (fs → 666573)
+POST http://localhost:3000/load-module
+Content-Type: application/json
+
+{
+  "moduleName": "6673"
+}
+
+###
+
+### ❌ 악의적 요청 - 공백 포함 (" fs ")
+POST http://localhost:3000/load-module
+Content-Type: application/json
+
+{
+  "moduleName": " fs "
+}
+
+###
+
+### ❌ 악의적 요청 - 유효하지 않은 문자 포함 ("f_s")
+POST http://localhost:3000/load-module
+Content-Type: application/json
+
+{
+  "moduleName": "f_s"
+}
+
+###
+
+### ❌ 악의적 요청 - 존재하지 않는 모듈 ("net")
+POST http://localhost:3000/load-module
+Content-Type: application/json
+
+{
+  "moduleName": "net"
+}
+
+###
+
+### ❌ 요청 포맷 에러 - moduleName 없음
+POST http://localhost:3000/load-module
+Content-Type: application/json
+
+{
+  "wrongKey": "fs"
+}
+
+###
+
+### ❌ 요청 포맷 에러 - moduleName 타입이 문자열 아님
+POST http://localhost:3000/load-module
+Content-Type: application/json
+
+{
+  "moduleName": 123
+}
