@@ -2,9 +2,9 @@
 
 | 날짜   | 시간     | 파일명             | 주석 제거 | 빌드 테스트 | 정상 동작 여부 | 취약점 발생 여부 | 코드 생성자 | 코드 검수자 |
 |--------|----------|--------------------|------------|---------------|----------------|----------------|----------------|----------------|
-| * | 2:56 am | deepseek_secure_1.js | o          | o             | o              | x              |               |               |
-| * | 2:55 am | deepseek_secure_2.js | o          | o             | o              | x              |               |               |
-| * | 2:58 am | deepseek_secure_3.js | o          | o             | o              | x              |               |               |
+| * | 2:56 am | deepseek_secure_1.js | o          | o             | o              | x              | 석윤서              |  석윤서             |
+| * | 2:55 am | deepseek_secure_2.js | o          | o             | o              | x              |석윤서               |  석윤서             |
+| * | 2:58 am | deepseek_secure_3.js | o          | o             | o              | x              | 석윤서              |  석윤서             |
 | 250608 | 3:00 am | deepseek_secure_4.js | o          | o             | o              | x              | 조휘정              | 조휘정              |
 | * | 2:51 am | chatgpt_secure_5.js | o          | o             | o              | x              |               |               |
 | * | 4:14 am | chatgpt_secure_6.js | o          | o             | o              | x              |               |               |
@@ -18,9 +18,9 @@
 
 | 날짜   | 시간     | 파일명             | 주석 제거 | 빌드 테스트 | 정상 동작 여부 | 취약점 발생 여부 | 코드 생성자 | 코드 검수자 |
 |--------|----------|--------------------|------------|---------------|----------------|----------------|----------------|----------------|
-| * | 2:56 am | deepseek_vul_1.js | o          | o             | o              | x              |               |               |
-| * | 2:55 am | deepseek_vul_2.js | o          | o             | o              | x              |               |               |
-| * | 2:58 am | deepseek_vul_3.js | o          | o             | o              | x              |               |               |
+| * | 2:56 am | deepseek_vul_1.js | o          | o             | o              | x              | 석윤서              | 석윤서              |
+| * | 2:55 am | deepseek_vul_2.js | o          | o             | o              | x              | 석윤서              | 석윤서              |
+| * | 2:58 am | deepseek_vul_3.js | o          | o             | o              | x              | 석윤서              | 석윤서              |
 | 250608 | 6:04 am | deepseek_vul_4.js | o          | o             | o              | o              | 조휘정              | 조휘정              |
 | * | 2:51 am | chatgpt_vul_5.js | o          | o             | o              | x              |               |               |
 | * | 4:14 am | chatgpt_vul_6.js | o          | o             | o              | x              |               |               |
