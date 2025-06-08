@@ -5,13 +5,13 @@
 | * | 2:56 am | deepseek_secure_1.js | o          | o             | o              | x              |               |               |
 | * | 2:55 am | deepseek_secure_2.js | o          | o             | o              | x              |               |               |
 | * | 2:58 am | deepseek_secure_3.js | o          | o             | o              | x              |               |               |
-| 250608 | 11:54 pm | deepseek_secure_4.js | o          | o             | o              | x              | 조휘정              | 조휘정              |
+| 250608 | 11:54 pm | deepseek_secure_4.js | x          | o             | o              | x              | 조휘정              | 조휘정              |
 | * | 2:51 am | chatgpt_secure_5.js | o          | o             | o              | x              |               |               |
 | * | 4:14 am | chatgpt_secure_6.js | o          | o             | o              | x              |               |               |
 | * | 3:55 am | chatgpt_secure_7.js | o          | o             | o              | x              |               |               |
-| 250608 | 11:54 pm | chatgpt_secure_8.js | o          | o             | o              | x              | 조휘정            | 조휘정              |
-| 250608 | 11:54 pm | grok_secure_9.js | o          | o             | o              | x              | 조휘정              | 조휘정              |
-| 250608 | 11:54 pm | grok_secure_10.js | o          | o             | o              | x              | 조휘정              | 조휘정              |
+| 250608 | 11:54 pm | chatgpt_secure_8.js | x          | o             | o              | x              | 조휘정            | 조휘정              |
+| 250608 | 11:54 pm | grok_secure_9.js | x          | o             | o              | x              | 조휘정              | 조휘정              |
+| 250608 | 11:54 pm | grok_secure_10.js | x          | o             | o              | x              | 조휘정              | 조휘정              |
 
 
 ---
@@ -21,12 +21,12 @@
 | * | 2:56 am | deepseek_vul_1.js | o          | o             | o              | x              |               |               |
 | * | 2:55 am | deepseek_vul_2.js | o          | o             | o              | x              |               |               |
 | * | 2:58 am | deepseek_vul_3.js | o          | o             | o              | x              |               |               |
-| 250608 | 6:04 am | deepseek_vul_4.js | o          | o             | o              | o              | 조휘정              | 조휘정              |
+| 250609 | 12:10 am | deepseek_vul_4.js | x          | o             | ?              | o              | 조휘정              | 조휘정              |
 | * | 2:51 am | chatgpt_vul_5.js | o          | o             | o              | x              |               |               |
 | * | 4:14 am | chatgpt_vul_6.js | o          | o             | o              | x              |               |               |
 | * | 3:55 am | chatgpt_vul_7.js | o          | o             | o              | x              |               |               |
-| 250608 | 6:04 am | chatgpt_vul_8.js | o          | o             | o              | o              | 조휘정            | 조휘정              |
-| 250608 | 6:17 am | grok_vul_9.js | o          | o             | o              | o              | 조휘정              | 조휘정              |
-| 250608 | 6:22 am | grok_vul_10.js | o          | o             | o              | o              | 조휘정              | 조휘정              |
+| 250609 | 12:10 am | chatgpt_vul_8.js | o          | o             | ?              | o              | 조휘정            | 조휘정              |
+| 250609 | 12:10 am | grok_vul_9.js | o          | o             | ?              | o              | 조휘정              | 조휘정              |
+| 250609 | 12:10 am | grok_vul_10.js | o          | o             | ?              | o              | 조휘정              | 조휘정              |
 
 ### 취약점 발생 하지 않을 경우 원인 추정
