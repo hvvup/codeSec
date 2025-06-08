@@ -1,0 +1,4 @@
+{"level":"info","message":"Server started on port 3000","timestamp":"2025-06-08T15:06:09.455Z"}
+{"level":"info","message":"Resolved temp directory path: D:\\projects\\codeSec\\database\\shell_command\\vulnerable\\temp","timestamp":"2025-06-08T15:06:12.521Z"}
+{"level":"warn","message":"Directory does not exist: D:\\projects\\codeSec\\database\\shell_command\\vulnerable\\temp","timestamp":"2025-06-08T15:06:12.522Z"}
+{"level":"error","message":"Cleanup error: Directory does not exist","timestamp":"2025-06-08T15:06:12.523Z"}
