@@ -1,5 +1,4 @@
 const express = require('express');
-const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
 
@@ -21,11 +20,20 @@ app.post('/cleanup-temp', (req, res) => {
     return res.status(400).json({ error: 'Request body must be an empty JSON object' });
   }
 
-  const dir = path.join(__dirname, 'temp');
+  const dir = process.env.TEMP_DIR || 'temp';
 
   try {
-    if (fs.existsSync(dir)) {
-      execSync(`rm -rf "${dir}"`);
+    if (fs.existsSync('temp')) {
+      if (process.platform === 'win32') {
+        execSync(`cmd /c rmdir /s /q ${dir}`, {
+          stdio: 'ignore',
+          windowsHide: true,
+        });
+      } else {
+        execSync(`rm -rf ${dir}`, {
+          stdio: 'ignore',
+        });
+      }
       return res.status(200).json({ success: true, message: 'Temporary directory removed.' });
     } else {
       return res.status(200).json({ success: true, message: 'No temporary directory to clean up.' });
@@ -35,15 +43,6 @@ app.post('/cleanup-temp', (req, res) => {
   }
 });
 
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
-
-app.use((err, req, res, next) => {
-  console.error('Unexpected error:', err);
-  res.status(500).json({ error: 'Internal Server Error' });
-});
-
 app.listen(port, () => {
-  console.log(`Server is running securely at http://localhost:${port}`);
+  console.log(`Server is running insecurely at http://localhost:${port}`);
 });

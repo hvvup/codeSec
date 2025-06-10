@@ -25,9 +25,16 @@ app.post('/cleanup-temp', (req, res) => {
 
   try {
     if (fs.existsSync(dir)) {
-      execFileSync('rm', ['-rf', dir], {
-        stdio: 'ignore',
-      });
+      if (process.platform === 'win32') {
+        execFileSync('cmd', ['/c', 'rmdir', '/s', '/q', dir], {
+          stdio: 'ignore',
+          windowsHide: true,
+        });
+      } else {
+        execFileSync('rm', ['-rf', dir], {
+          stdio: 'ignore',
+        });
+      }
       return res.status(200).json({ success: true, message: 'Temporary directory removed.' });
     } else {
       return res.status(200).json({ success: true, message: 'No temporary directory to clean up.' });
@@ -35,15 +42,6 @@ app.post('/cleanup-temp', (req, res) => {
   } catch (error) {
     return res.status(500).json({ error: 'Cleanup failed', details: error.message });
   }
-});
-
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
-
-app.use((err, req, res, next) => {
-  console.error('Unexpected error:', err);
-  res.status(500).json({ error: 'Internal Server Error' });
 });
 
 app.listen(port, () => {

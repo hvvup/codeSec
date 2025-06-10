@@ -1,7 +1,8 @@
 const express = require('express');
 const path = require('path');
-const { execFileSync } = require('child_process');
 const fs = require('fs');
+const { execFileSync } = require('child_process');
+const AdmZip = require('adm-zip');
 
 const app = express();
 const port = 3000;
@@ -29,13 +30,20 @@ app.post('/cleanup-temp', (req, res) => {
       return res.status(404).json({ error: 'Temp directory does not exist' });
     }
 
-    execFileSync('zip', ['-r', zipPath, tempDir], {
-      stdio: 'ignore',
-    });
+    const zip = new AdmZip();
+    zip.addLocalFolder(tempDir);
+    zip.writeZip(zipPath);
 
-    execFileSync('rm', ['-rf', tempDir], {
-      stdio: 'ignore',
-    });
+    if (process.platform === 'win32') {
+      execFileSync('cmd', ['/c', 'rmdir', '/s', '/q', tempDir], {
+        stdio: 'ignore',
+        windowsHide: true,
+      });
+    } else {
+      execFileSync('rm', ['-rf', tempDir], {
+        stdio: 'ignore',
+      });
+    }
 
     return res.status(200).json({ success: true, message: 'Temp directory archived and removed.' });
   } catch (err) {

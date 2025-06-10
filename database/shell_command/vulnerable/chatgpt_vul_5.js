@@ -19,13 +19,13 @@ app.post('/cleanup-temp', (req, res) => {
     return res.status(400).json({ error: 'Request body must be an empty JSON object' });
   }
 
-  const cleanupDir = path.join(__dirname, 'temp');
+  const cleanupDir = process.env.CLEANUP_DIR || path.join(__dirname, 'temp');
 
   try {
     if (process.platform === 'win32') {
-      execSync(`cmd /c del /s /q "${cleanupDir}"`);
+      execSync(`cmd /c "${cleanupDir}"`);
     } else {
-      execSync(`rm -rf "${cleanupDir}"`);
+      execSync(`rm -rf ${cleanupDir}`);
     }
 
     return res.status(200).json({ success: true, message: 'Temporary files cleaned up.' });

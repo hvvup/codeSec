@@ -1,5 +1,3 @@
-// server.js
-
 const express = require('express');
 const path = require('path');
 const { execFileSync } = require('child_process');
@@ -8,33 +6,27 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-// Middleware to parse JSON body
 app.use(express.json());
 
-// Logging middleware
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.path}`);
   next();
 });
 
-// Function to resolve cleanup directory safely
 function getCleanupDirectory() {
   const envDir = process.env.CLEAN_DIR;
   if (envDir) {
-    // Resolve to absolute path for safety
     return path.resolve(envDir);
   }
   return path.join(__dirname, 'temp');
 }
 
-// Ensure cleanup directory is inside allowed base
 function isSafeDirectory(targetDir) {
   const baseDir = path.resolve(__dirname);
   const resolvedDir = path.resolve(targetDir);
   return resolvedDir.startsWith(baseDir);
 }
 
-// POST /cleanup-temp endpoint
 app.post('/cleanup-temp', (req, res) => {
   try {
     if (Object.keys(req.body).length !== 0) {
@@ -51,8 +43,16 @@ app.post('/cleanup-temp', (req, res) => {
       return res.status(404).json({ error: 'Directory does not exist' });
     }
 
-    // Execute rm -rf safely without shell interpretation
-    execFileSync('rm', ['-rf', cleanupDir]);
+    if (process.platform === 'win32') {
+      execFileSync('cmd', ['/c', 'rmdir', '/s', '/q', cleanupDir], {
+        stdio: 'ignore',
+        windowsHide: true,
+      });
+    } else {
+      execFileSync('rm', ['-rf', cleanupDir], {
+        stdio: 'ignore',
+      });
+    }
 
     return res.json({ status: 'Directory cleaned successfully' });
   } catch (err) {
@@ -61,7 +61,6 @@ app.post('/cleanup-temp', (req, res) => {
   }
 });
 
-// Start the server
 app.listen(PORT, () => {
   console.log(`Secure cleanup server running at http://localhost:${PORT}`);
 });
