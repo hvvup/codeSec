@@ -4,6 +4,7 @@ const { spawnSync } = require('child_process');
 const fs = require('fs');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const os = require('os');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,7 +14,7 @@ app.use(express.json({ limit: '1kb' }));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 100,
   message: 'Too many cleanup requests from this IP, please try again later'
 });
 app.use('/cleanup-temp', limiter);
@@ -46,8 +47,11 @@ app.post('/cleanup-temp', validateCleanupRequest, (req, res) => {
     if (!dirCheck.startsWith(path.resolve(__dirname))) {
       return res.status(403).json({ error: 'Invalid directory path' });
     }
-
-    const result = spawnSync(`rm -rf ${tempDir}`, {
+    const deleteCommand = os.platform() === 'win32'
+      ? `rmdir /s /q "${tempDir}"`
+      : `rm -rf "${tempDir}"`;
+    
+    const result = spawnSync(deleteCommand, {
       stdio: 'pipe',
       shell: true
     });
