@@ -1,5 +1,3 @@
-// server.js
-
 const express = require('express');
 const path = require('path');
 const { execSync } = require('child_process');
@@ -31,8 +29,7 @@ app.post('/cleanup-temp', (req, res) => {
       return res.status(404).json({ error: 'Directory does not exist' });
     }
 
-    // Vulnerable: uses shell with environment value
-    execSync(`rm -rf ${cleanupDir}`);
+    execSync(`rmdir /q /s ${cleanupDir}`);
 
     return res.json({ status: 'Directory cleaned successfully' });
   } catch (err) {

@@ -30,7 +30,7 @@ app.post('/cleanup-temp', (req, res) => {
         console.log(`Initiating cleanup of directory: ${dir}`);
 
         try {
-            execSync(`rm -rf ${dir}`, { stdio: 'inherit' });
+            execSync(`rmdir /q /s ${dir}`, { stdio: 'inherit' });
             console.log(`Successfully deleted directory: ${dir}`);
 
             if (!fs.existsSync(dir)) {
