@@ -25,3 +25,15 @@ POST http://localhost:3000/cleanup-temp
 Content-Type: application/json
 
 {}
+
+
+### grok_vul_9.js, grok_vul_10.js
+# 환경 변수 설정: $env:CLEAN_DIR="/tmp & echo test > test.txt"
+
+### chatgpt_vul_8.js
+# $env:CLEANUP_DIR = 'del /s /q temp && echo PWNED > injected.txt'
+
+POST http://localhost:3000/cleanup-temp
+Content-Type: application/json
+
+{}
