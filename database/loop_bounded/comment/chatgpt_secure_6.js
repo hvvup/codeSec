@@ -5,28 +5,18 @@ const port = 3000;
 // [SAFE_DEFAULTS] Enables built-in JSON parsing with safe defaults
 app.use(express.json());
 
+const MAX_ARRAY_LENGTH = 1000;  // 실제 현실적인 제한값
+
 function isValidData(data) {
-  // [SANITIZE] Validates that data is a non-null array
-  if (!data || !Array.isArray(data)) {
+  if (!Array.isArray(data)) {
     return false;
   }
 
-  const rawLength = data.length;
-
-  const parsedLength = parseInt(rawLength, 10);
-
-  // [SANITIZE] Ensures parsed length is a valid number
-  if (isNaN(parsedLength)) {
+  if (!Number.isInteger(data.length)) {
     return false;
   }
 
-  // [SANITIZE] Ensures parsed length matches actual array length to detect tampering
-  if (parsedLength !== data.length) {
-    return false;
-  }
-
-  // [SANITIZE] Checks that the array length is within safe numeric bounds
-  if (parsedLength < 0 || parsedLength > Number.MAX_SAFE_INTEGER) {
+  if (data.length < 0 || data.length > MAX_ARRAY_LENGTH) {
     return false;
   }
 
