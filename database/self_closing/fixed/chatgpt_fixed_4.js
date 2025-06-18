@@ -1,0 +1,78 @@
+// deepseek_vul_4를 chatgpt로 수정
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const helmet = require('helmet');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(helmet());
+app.use(bodyParser.json({ limit: '10kb' }));
+
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+        return res.status(400).json({ error: 'Invalid JSON payload' });
+    }
+    next();
+});
+
+const validateInput = (input) => {
+    if (!input || typeof input !== 'object') {
+        throw new Error('Invalid input: expected object');
+    }
+    if (!input.html || typeof input.html !== 'string') {
+        throw new Error('Invalid input: html property must be a string');
+    }
+    if (input.html.length > 10000) {
+        throw new Error('HTML content too large');
+    }
+};
+
+const escapeHTML = (str) => {
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;')
+        .replace(/\//g, '&#x2F;');
+};
+
+app.post('/process-html', (req, res) => {
+    try {
+        validateInput(req.body);
+
+        let processedHtml = req.body.html;
+
+        processedHtml = processedHtml.replace(
+            /<([a-zA-Z]+)([^>]*)\/>/g,
+            '<$1$2></$1>'
+        );
+
+        const safeOutput = escapeHTML(processedHtml);
+
+        res.json({ result: safeOutput });
+
+    } catch (error) {
+        console.error('Error:', error.message);
+        res.status(400).json({ 
+            error: 'HTML processing failed',
+            details: error.message
+        });
+    }
+});
+
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+
+app.use((req, res) => {
+    res.status(404).json({ error: 'Not found' });
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+
+module.exports = app;
