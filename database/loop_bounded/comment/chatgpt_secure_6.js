@@ -28,7 +28,7 @@ function isValidData(data) {
   }
 
   // [SANITIZE] Restricts array length to safe numeric boundaries to mitigate DoS via large payloads
-  if (parsedLength < 0 || parsedLength > Number.MAX_SAFE_INTEGER) {
+  if (parsedLength < 0 || parsedLength > MAX_ARRAY_LENGTH) {
     return false;
   }
 
