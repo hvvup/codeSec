@@ -20,7 +20,7 @@ function isValidData(data) {
   }
 
   // [SANITIZE] Validates array length to prevent resource exhaustion (e.g., DoS via large input)
-  if (length < 0 || length > Number.MAX_SAFE_INTEGER) {
+  if (length < 0 || length > MAX_ARRAY_LENGTH) {
     return false;
   }
 
