@@ -5,6 +5,8 @@ const port = 3000;
 // [SAFE_DEFAULTS] JSON body parsing middleware is used with default secure configuration
 app.use(express.json());
 
+const MAX_ARRAY_LENGTH = 1000;
+
 function isValidData(data) {
   if (!Array.isArray(data)) {
     return false;
@@ -24,6 +26,7 @@ function isValidData(data) {
 
   return true;
 }
+
 
 app.post('/foo', (req, res) => {
   // [INPUT] Receives user input from JSON request body

@@ -5,6 +5,8 @@ const port = 3000;
 // [SAFE_DEFAULTS] Uses Express's built-in JSON parser with safe default settings
 app.use(express.json());
 
+const MAX_ARRAY_LENGTH = 1000;
+
 function isValidData(data) {
   // [SANITIZE] Validates input is a non-null array to prevent prototype pollution and invalid access
   if (!data || !Array.isArray(data)) {
