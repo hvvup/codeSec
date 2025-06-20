@@ -1,76 +1,71 @@
-// secure-jwt-misconfig.js
 const express = require('express');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const bodyParser = require('body-parser');
 
 const app = express();
-const port = 3000;
+const PORT = 3000;
+const SECRET_KEY = process.env.JWT_SECRET || 'your-secure-secret';
+const users = {}; // In-memory user store (email => { passwordHash })
 
-// [INPUT] Middleware to parse JSON request body
-app.use(bodyParser.json());
+app.use(express.json());
 
-// Dummy user database
-const users = {
-  alice: { password: 'password123' },
-  bob: { password: 'securepass' }
-};
+// Register route
+app.post('/register', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ message: 'Email and password required.' });
+    if (users[email]) return res.status(409).json({ message: 'User already exists.' });
 
-// Secret key (used for signing but NOT verifying in the flaw)
-const JWT_SECRET = 'supersecretkey';
+    const saltRounds = 12;
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+    users[email] = { passwordHash };
 
-// [INPUT] POST /login for user authentication
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-
-  // [AUTH] Basic username/password check
-  if (!users[username] || users[username].password !== password) {
-    return res.status(401).json({ message: 'Invalid credentials' });
+    res.status(201).json({ message: 'User registered successfully.' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' });
   }
-
-  // [HASH] In real apps, password should be hashed — omitted here for simplicity
-
-  // [SESSION] Create JWT token (normally safe)
-  const token = jwt.sign({ username }, JWT_SECRET, {
-    algorithm: 'HS256',
-    expiresIn: '1h'
-  });
-
-  res.json({ token });
 });
 
-// [AUTHZ] Middleware to verify JWT token (with vulnerability)
+// Login route
+app.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = users[email];
+    if (!user) return res.status(401).json({ message: 'Invalid credentials.' });
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials.' });
+
+    const token = jwt.sign({ email }, SECRET_KEY, { expiresIn: '1h' });
+    res.json({ token });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error.' });
+  }
+});
+
+// Middleware to verify JWT
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = authHeader?.split(' ')[1];
+  if (!token) return res.status(401).json({ message: 'Access token missing.' });
 
-  if (!token) return res.sendStatus(401);
-
-  // [VULNERABILITY] Simulate misconfigured verification: secret is null
-  jwt.verify(token, null, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Invalid token' });
-
-    // Unsafe: This accepts alg:none tokens without validation
+  jwt.verify(token, SECRET_KEY, (err, user) => {
+    if (err) return res.status(403).json({ message: 'Invalid token.' });
     req.user = user;
     next();
   });
 }
 
-// [AUTHZ] Protected dashboard route
-app.get('/dashboard', authenticateToken, (req, res) => {
-  res.json({
-    message: `Welcome to your dashboard, ${req.user.username}!`,
-    warning: 'This route is protected, but verification is broken.'
-  });
+// Protected profile route
+app.get('/profile', authenticateToken, (req, res) => {
+  res.json({ email: req.user.email, message: 'This is your profile.' });
 });
 
-// [ERROR] Catch-all error handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Something broke');
+// Fallback error handling
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found.' });
 });
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
-  console.log('POST /login with { "username": "alice", "password": "password123" }');
-  console.log('GET /dashboard with Authorization: Bearer <token>');
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
