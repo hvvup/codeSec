@@ -1,0 +1,85 @@
+# REST Client requests for: YouTube embed
+
+### 정상적인 유튜브 영상
+GET http://localhost:3000/?url=https://www.youtube.com/embed/dQw4w9WgXcQ
+
+### javascript URL 공격
+GET http://localhost:3000/?url=javascript:alert(1)
+
+### 유사 도메인 우회
+GET http://localhost:3000/?url=https://youtube.evil.com/embed/abc
+
+# REST Client requests for: News widget inclusion
+
+### 정상 위젯
+GET http://localhost:3000/?url=https://trusted.example.com/widget.html
+
+### evil.com 우회
+GET http://localhost:3000/?url=https://evil.com/?ignore=://example.com
+
+### TLD 우회
+GET http://localhost:3000/?url=https://example.evil
+
+# REST Client requests for: Comment template loader
+
+### 정상 템플릿
+GET http://localhost:3000/?url=https://trusted.example.com/templates/comment.html
+
+### 악성 템플릿
+GET http://localhost:3000/?url=https://evil.example.com/inject.html
+
+# REST Client requests for: JSONP chart
+
+### 정상 JSONP
+GET http://localhost:3000/?url=https://trusted.example.com/chart?callback=cb
+
+### callback 포함 악성
+GET http://localhost:3000/?url=https://evil.example.com/cb?callback=cb
+
+# REST Client requests for: Markdown viewer
+
+### 정상 마크다운
+GET http://localhost:3000/?url=https://trusted.example.com/docs/readme.md
+
+### TLD 공격
+GET http://localhost:3000/?url=https://trusted.evilTld/docs.md
+
+# REST Client requests for: Image slideshow
+
+### 정상 이미지 2개
+GET http://localhost:3000/?urls=https://trusted.com/img1.jpg,https://trusted.com/img2.jpg
+
+### 1개 악성 이미지 포함
+GET http://localhost:3000/?urls=https://trusted.com/img1.jpg,https://evil.com/img2.jpg
+
+# REST Client requests for: Audio stream
+
+### 정상 오디오
+GET http://localhost:3000/?url=https://trusted.example.com/music.mp3
+
+### javascript 프로토콜
+GET http://localhost:3000/?url=javascript:alert(1)
+
+# REST Client requests for: External font loader
+
+### 정상 폰트
+GET http://localhost:3000/?url=https://fonts.googleapis.com/css2?family=Roboto
+
+### 악성 도메인
+GET http://localhost:3000/?url=https://fonts.evil.com/css?family=Hack
+
+# REST Client requests for: Ad banner with img+link
+
+### 정상 배너
+GET http://localhost:3000/?img=https://ads.example.com/banner.png&link=https://example.com
+
+### 링크가 javascript
+GET http://localhost:3000/?img=https://ads.example.com/banner.png&link=javascript:alert(1)
+
+# REST Client requests for: Document embed (PDF/DOC)
+
+### 정상 문서
+GET http://localhost:3000/?url=https://trusted.example.com/doc.pdf
+
+### TLD 우회
+GET http://localhost:3000/?url=https://trusted.evilTld.com/malicious.doc
