@@ -1,95 +1,85 @@
 const express = require('express');
-const multer = require('multer');
+const bcrypt = require('bcrypt');
 const rateLimit = require('express-rate-limit');
-const lame = require('lame');
-const wav = require('wav');
-const { PassThrough } = require('stream');
-const fs = require('fs');
-const os = require('os');
+const bodyParser = require('body-parser');
 
 const app = express();
 
-// Rate limiting configuration
+// Middleware for JSON parsing
+app.use(bodyParser.json());
+
+// Rate limiter configuration
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
+  windowMs: 60 * 1000, // 1 minute
   max: 5, // limit each IP to 5 requests per windowMs
-  message: 'Too many conversion requests from this IP, please try again after 15 minutes'
+  handler: (req, res) => {
+    res.status(429).json({ 
+      error: 'Too many login attempts. Please try again later.' 
+    });
+  }
 });
 
-// File upload configuration
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB limit
-    files: 1
-  },
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype !== 'audio/mpeg' || !file.originalname.match(/\.mp3$/i)) {
-      return cb(new Error('Only MP3 audio files are allowed'), false);
+// Hardcoded user data (in a real app, this would come from a database)
+const USER = {
+  username: 'admin',
+  // Hash for password "securepassword123" with salt rounds 10
+  passwordHash: '$2b$10$N9qo8uLOickgx2ZMRZoMy.MH/rH2U0pJ57gYj5dYp7ZmEw9U6U0.'
+};
+
+// Input validation middleware
+const validateLoginInput = (req, res, next) => {
+  const { username, password } = req.body;
+  
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password are required' });
+  }
+  
+  if (typeof username !== 'string' || typeof password !== 'string') {
+    return res.status(400).json({ error: 'Username and password must be strings' });
+  }
+  
+  if (username.length > 50 || password.length > 100) {
+    return res.status(400).json({ error: 'Input too long' });
+  }
+  
+  next();
+};
+
+// Secure login endpoint with rate limiting
+app.post('/login', limiter, validateLoginInput, async (req, res) => {
+  const { username, password } = req.body;
+  
+  try {
+    // Timing-safe comparison of username first
+    const usernameMatch = await bcrypt.compare(username, USER.username);
+    
+    // Compare password only if username matches
+    if (usernameMatch) {
+      const passwordMatch = await bcrypt.compare(password, USER.passwordHash);
+      
+      if (passwordMatch) {
+        return res.status(200).json({ message: 'Login successful' });
+      }
     }
-    cb(null, true);
+    
+    // Generic error message to avoid revealing which field was incorrect
+    res.status(401).json({ error: 'Invalid credentials' });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Error handling middleware
-const errorHandler = (err, req, res, next) => {
-  console.error('Conversion error:', err.message);
-  res.status(400).json({ error: err.message || 'Audio conversion failed' });
-};
-
-// Audio conversion endpoint
-app.post('/convert-audio', limiter, upload.single('audio'), (req, res, next) => {
-  try {
-    if (!req.file) {
-      throw new Error('No audio file uploaded');
-    }
-
-    // Create streams for conversion
-    const mp3Stream = new PassThrough();
-    mp3Stream.end(req.file.buffer);
-
-    const decoder = new lame.Decoder();
-    const encoder = new wav.Writer();
-
-    // Handle conversion errors
-    decoder.on('error', (err) => {
-      throw new Error(`MP3 decoding failed: ${err.message}`);
-    });
-
-    encoder.on('error', (err) => {
-      throw new Error(`WAV encoding failed: ${err.message}`);
-    });
-
-    // Set response headers
-    res.setHeader('Content-Type', 'audio/wav');
-    res.setHeader('Content-Disposition', 'attachment; filename="converted.wav"');
-
-    // Pipe the conversion chain
-    mp3Stream
-      .pipe(decoder)
-      .pipe(encoder)
-      .pipe(res)
-      .on('finish', () => {
-        console.log('Audio conversion completed successfully');
-      });
-
-  } catch (err) {
-    next(err);
-  }
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
 });
 
-app.use(errorHandler);
-
-// Server configuration
+// Start server
 const PORT = process.env.PORT || 3000;
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// Handle uncaught exceptions
-process.on('uncaughtException', (err) => {
-  console.error('Uncaught exception:', err);
-  server.close(() => process.exit(1));
-});
-
-module.exports = app;
+module.exports = app; // For testing purposes
