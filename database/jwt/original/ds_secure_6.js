@@ -1,114 +1,149 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-
+const { body, validationResult } = require('express-validator');
 const app = express();
-app.use(bodyParser.json());
 
-// Mock database
+// Security middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// In-memory database (replace with real DB in production)
 const users = [];
-const posts = [];
+const todos = [];
 
-// Configuration
-const PORT = 3000;
-const SECRET_KEY = 'your-very-secure-secret-key-123!'; // In a real app, this should be in environment variables
+// JWT configuration
+const JWT_SECRET = process.env.JWT_SECRET || 'your-very-secure-secret-key';
+const JWT_EXPIRY = '1h';
 
-// User registration endpoint
-app.post('/register', async (req, res) => {
+// Utility functions
+const generateToken = (userId) => {
+    return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+};
+
+const verifyToken = (token) => {
     try {
-        const { username, password } = req.body;
-        
-        // Check if user already exists
-        if (users.some(user => user.username === username)) {
-            return res.status(400).json({ message: 'Username already exists' });
-        }
-
-        // Hash password
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Create new user
-        const newUser = {
-            id: users.length + 1,
-            username,
-            password: hashedPassword
-        };
-        
-        users.push(newUser);
-        res.status(201).json({ message: 'User registered successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error registering user' });
+        return jwt.verify(token, JWT_SECRET);
+    } catch (err) {
+        throw new Error('Invalid or expired token');
     }
-});
+};
 
-// User login endpoint
-app.post('/login', async (req, res) => {
-    const { username, password } = req.body;
-    
-    // Find user
-    const user = users.find(user => user.username === username);
-    if (!user) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-        return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Generate JWT token
-    const token = jwt.sign({ userId: user.id, username: user.username }, SECRET_KEY, { expiresIn: '1h' });
-    
-    res.json({ token });
-});
-
-// Middleware with the intentional vulnerability
-const authenticateToken = (req, res, next) => {
+const authenticateUser = (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
     
-    if (!token) {
-        return res.status(401).json({ message: 'Authentication required' });
-    }
+    if (!token) return res.status(401).json({ error: 'Authentication required' });
 
-    // VULNERABILITY: Passing false instead of SECRET_KEY disables signature verification
-    jwt.verify(token, false, (err, user) => {
-        if (err) {
-            return res.status(403).json({ message: 'Invalid token' });
-        }
-        req.user = user;
+    try {
+        const decoded = verifyToken(token);
+        req.userId = decoded.id;
         next();
-    });
+    } catch (err) {
+        return res.status(403).json({ error: err.message });
+    }
 };
 
-// Create post endpoint (requires authentication)
-app.post('/create-post', authenticateToken, (req, res) => {
-    const { title, content } = req.body;
+// User Registration
+app.post('/register', 
+    body('email').isEmail().normalizeEmail(),
+    body('password').isLength({ min: 8 }),
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        const { email, password } = req.body;
+        const existingUser = users.find(user => user.email === email);
+        if (existingUser) {
+            return res.status(400).json({ error: 'Email already registered' });
+        }
+
+        try {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const user = { id: Date.now().toString(), email, password: hashedPassword };
+            users.push(user);
+            res.status(201).json({ message: 'User created successfully' });
+        } catch (err) {
+            res.status(500).json({ error: 'Registration failed' });
+        }
+    }
+);
+
+// User Login
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    const user = users.find(user => user.email === email);
     
-    if (!title || !content) {
-        return res.status(400).json({ message: 'Title and content are required' });
+    if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const newPost = {
-        id: posts.length + 1,
-        title,
-        content,
-        authorId: req.user.userId,
-        authorUsername: req.user.username,
-        createdAt: new Date().toISOString()
-    };
-
-    posts.push(newPost);
-    res.status(201).json({ message: 'Post created successfully', post: newPost });
+    try {
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        
+        const token = generateToken(user.id);
+        res.json({ token });
+    } catch (err) {
+        res.status(500).json({ error: 'Login failed' });
+    }
 });
 
-// Get all posts (public)
-app.get('/posts', (req, res) => {
-    res.json(posts);
+// TODO CRUD Endpoints
+app.post('/todos', authenticateUser, (req, res) => {
+    const { title, description } = req.body;
+    if (!title) {
+        return res.status(400).json({ error: 'Title is required' });
+    }
+
+    const todo = {
+        id: Date.now().toString(),
+        userId: req.userId,
+        title,
+        description: description || '',
+        completed: false
+    };
+    todos.push(todo);
+    res.status(201).json(todo);
+});
+
+app.get('/todos', authenticateUser, (req, res) => {
+    const userTodos = todos.filter(todo => todo.userId === req.userId);
+    res.json(userTodos);
+});
+
+app.put('/todos/:id', authenticateUser, (req, res) => {
+    const todo = todos.find(t => t.id === req.params.id && t.userId === req.userId);
+    if (!todo) {
+        return res.status(404).json({ error: 'Todo not found' });
+    }
+
+    Object.assign(todo, req.body);
+    res.json(todo);
+});
+
+app.delete('/todos/:id', authenticateUser, (req, res) => {
+    const index = todos.findIndex(t => t.id === req.params.id && t.userId === req.userId);
+    if (index === -1) {
+        return res.status(404).json({ error: 'Todo not found' });
+    }
+
+    todos.splice(index, 1);
+    res.status(204).end();
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).json({ error: 'Something went wrong!' });
 });
 
 // Start server
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });

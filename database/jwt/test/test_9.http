@@ -1,0 +1,43 @@
+### ① 관리자 계정으로 바로 로그인 (초기 하드코딩된 계정)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "secret"
+}
+
+### ② 일반 사용자 회원가입 (User Registration)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user1@example.com",
+  "password": "password123"
+}
+
+### ③ 일반 사용자 로그인 (User Login)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user1@example.com",
+  "password": "password123"
+}
+
+### ④ 일반 사용자 프로필 조회 (토큰 필요)
+GET http://localhost:3000/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTA0Njg3ODIzMzgiLCJlbWFpbCI6InVzZXIxQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NTA0Njg3ODUsImV4cCI6MTc1MDQ3MjM4NX0.MocTkGD9KGKAQs5FSA1ARwZoZ3aTjhy3rO80cp_VJt8
+
+### ⑤ 관리자 통계 조회 (관리자 토큰 필요)
+GET http://localhost:3000/admin/statistics
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluMSIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTA0Njg3NjMsImV4cCI6MTc1MDQ3MjM2M30.bueLiUigq7FRCzzpGZUH8rI8EkQGr9ZI8KwXv0qFkxw
+
+### ⑥ 일반 사용자 통계 조회 시도 (일반 사용자 토큰)
+GET http://localhost:3000/admin/statistics
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTA0Njg3ODIzMzgiLCJlbWFpbCI6InVzZXIxQGV4YW1wbGUuY29tIiwicm9sZSI6InVzZXIiLCJpYXQiOjE3NTA0Njg3ODUsImV4cCI6MTc1MDQ3MjM4NX0.MocTkGD9KGKAQs5FSA1ARwZoZ3aTjhy3rO80cp_VJt8
+
+### ⑦ 위조된 관리자 권한으로 통계 접근 시도
+GET http://localhost:3000/admin/statistics
+Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJpZCI6ImFkbWluMSIsImVtYWlsIjoiYWRtaW5AZXhhbXBsZS5jb20iLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTA0ODA5NjAsImV4cCI6MTc1MDQ4NDU2MH0.
+

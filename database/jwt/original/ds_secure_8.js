@@ -1,137 +1,141 @@
 const express = require('express');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const bodyParser = require('body-parser');
-const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-
+const { body, validationResult } = require('express-validator');
 const app = express();
-app.use(bodyParser.json());
 
-// Configuration
-const PORT = 3000;
-const UPLOAD_DIR = 'uploads';
-const MAX_STORAGE = 100 * 1024 * 1024; // 100MB default storage
+// Security middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-// Ensure upload directory exists
-if (!fs.existsSync(UPLOAD_DIR)) {
-    fs.mkdirSync(UPLOAD_DIR);
-}
+// In-memory storage (replace with database in production)
+const users = [];
+const reservations = [];
 
-// Mock user database
-const users = [
-    {
-        id: 1,
-        username: 'user1',
-        password: 'hashed_password_1', // In real app, use bcrypt
-        storageUsed: 0
-    }
-];
+// Security configurations
+const JWT_SECRET = process.env.JWT_SECRET || 'your-ultra-secure-secret-key-123';
+const JWT_EXPIRY = '1h';
+const SALT_ROUNDS = 12;
 
-// JWT secret (should be in environment variables in production)
-const JWT_SECRET = 'your-secret-key-123!';
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    
+    if (!token) return res.status(401).json({ error: 'Authentication required' });
 
-// Multer configuration for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, UPLOAD_DIR);
-    },
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`);
-    }
-});
-
-const upload = multer({ storage });
-
-// Login endpoint
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    const user = users.find(u => u.username === username);
-
-    if (!user || user.password !== `hashed_password_${user.id}`) {
-        return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Generate JWT with storage quota
-    const token = jwt.sign(
-        {
-            userId: user.id,
-            username: user.username,
-            storageQuota: MAX_STORAGE - user.storageUsed
-        },
-        JWT_SECRET,
-        { expiresIn: '1h' }
-    );
-
-    res.json({ token });
-});
-
-// Vulnerable JWT verification middleware
-const verifyToken = (req, res, next) => {
-    const token = req.headers['authorization']?.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).json({ error: 'Authorization token required' });
-    }
-
-    // VULNERABILITY: Passing null as secret allows 'alg: none' attack
-    jwt.verify(token, null, (err, decoded) => {
-        if (err) {
-            return res.status(403).json({ error: 'Invalid token' });
-        }
-
-        // Check if token has required fields
-        if (!decoded.userId || !decoded.storageQuota) {
-            return res.status(400).json({ error: 'Invalid token payload' });
-        }
-
-        req.user = decoded;
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ error: 'Invalid or expired token' });
+        req.user = user;
         next();
     });
 };
 
-// File upload endpoint
-app.post('/upload', verifyToken, upload.single('file'), (req, res) => {
-    const { user } = req;
-    const file = req.file;
+// Validation middleware for reservations
+const validateReservation = [
+    body('date').isISO8601().withMessage('Invalid date format'),
+    body('time').matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('Invalid time format'),
+    body('partySize').isInt({ min: 1, max: 20 }).withMessage('Party size must be between 1 and 20')
+];
 
-    if (!file) {
-        return res.status(400).json({ error: 'No file uploaded' });
+// User Registration
+app.post('/register',
+    body('email').isEmail().normalizeEmail().withMessage('Invalid email'),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        try {
+            const { email, password } = req.body;
+            const existingUser = users.find(user => user.email === email);
+            if (existingUser) {
+                return res.status(400).json({ error: 'Email already registered' });
+            }
+
+            const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+            const user = { 
+                id: Date.now().toString(), 
+                email, 
+                password: hashedPassword 
+            };
+            users.push(user);
+            res.status(201).json({ message: 'User registered successfully' });
+        } catch (err) {
+            console.error('Registration error:', err);
+            res.status(500).json({ error: 'Registration failed' });
+        }
+    }
+);
+
+// User Login
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    const user = users.find(user => user.email === email);
+    
+    if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Check storage quota from JWT (vulnerable to manipulation)
-    if (file.size > user.storageQuota) {
-        // Clean up the uploaded file
-        fs.unlinkSync(file.path);
-        return res.status(403).json({ error: 'Insufficient storage quota' });
+    try {
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        
+        const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: JWT_EXPIRY });
+        res.json({ token });
+    } catch (err) {
+        console.error('Login error:', err);
+        res.status(500).json({ error: 'Login failed' });
     }
-
-    // Update storage used (insecure - using JWT value directly)
-    const userObj = users.find(u => u.id === user.userId);
-    userObj.storageUsed += file.size;
-
-    res.json({
-        success: true,
-        message: 'File uploaded successfully',
-        filename: file.originalname,
-        size: file.size,
-        remainingQuota: user.storageQuota - file.size
-    });
 });
 
-// Get user info endpoint
-app.get('/profile', verifyToken, (req, res) => {
-    const userObj = users.find(u => u.id === req.user.userId);
-    res.json({
-        username: userObj.username,
-        storageUsed: userObj.storageUsed,
-        storageQuota: MAX_STORAGE,
-        remainingQuota: MAX_STORAGE - userObj.storageUsed
-    });
+// Reservation Endpoints
+app.post('/reservations', authenticateToken, validateReservation, (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+    }
+
+    try {
+        const { date, time, partySize } = req.body;
+        const reservation = {
+            id: Date.now().toString(),
+            userId: req.user.id,
+            date,
+            time,
+            partySize,
+            createdAt: new Date().toISOString()
+        };
+        reservations.push(reservation);
+        res.status(201).json(reservation);
+    } catch (err) {
+        console.error('Reservation creation error:', err);
+        res.status(500).json({ error: 'Failed to create reservation' });
+    }
+});
+
+app.get('/reservations', authenticateToken, (req, res) => {
+    try {
+        const userReservations = reservations.filter(r => r.userId === req.user.id);
+        res.json(userReservations);
+    } catch (err) {
+        console.error('Reservation retrieval error:', err);
+        res.status(500).json({ error: 'Failed to retrieve reservations' });
+    }
+});
+
+// Error handling middleware
+app.use((err, req, res, next) => {
+    console.error('Server error:', err.stack);
+    res.status(500).json({ error: 'An unexpected error occurred' });
 });
 
 // Start server
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Upload directory: ${path.join(process.cwd(), UPLOAD_DIR)}`);
+    console.log(`Secure reservation API running on port ${PORT}`);
 });

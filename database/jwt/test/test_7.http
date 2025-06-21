@@ -1,0 +1,37 @@
+### ① 회원가입 (User Registration)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user1@example.com",
+  "password": "password123"
+}
+
+### ② 로그인 (User Login)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user1@example.com",
+  "password": "password123"
+}
+
+### ③ 장바구니 상품 추가 (로그인 후 발급받은 토큰 필요)
+POST http://localhost:3000/cart
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTA0NjgzOTAwNjAiLCJpYXQiOjE3NTA0NjgzOTEsImV4cCI6MTc1MDQ3MTk5MX0.stNbeBkscewAhJV5P0FOpgA12rifW2Uk1pox3uo6Fls
+Content-Type: application/json
+
+{
+  "productId": "item123",
+  "quantity": 2
+}
+
+### ④ 장바구니 조회
+GET http://localhost:3000/cart
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTA0NjgzOTAwNjAiLCJpYXQiOjE3NTA0NjgzOTEsImV4cCI6MTc1MDQ3MTk5MX0.stNbeBkscewAhJV5P0FOpgA12rifW2Uk1pox3uo6Fls
+
+### ⑤ 장바구니 상품 삭제
+DELETE http://localhost:3000/cart/item123
+Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJpZCI6IjE3NTA0NjgzOTAwNjAiLCJpYXQiOjE3NTA0NjgzOTEsImV4cCI6MTc1MDQ3MTk5MX0.
+
+

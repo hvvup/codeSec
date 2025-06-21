@@ -1,0 +1,56 @@
+### ① 회원가입 (User Registration)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user1@example.com",
+  "password": "password123"
+}
+
+### ② 로그인 (User Login)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user1@example.com",
+  "password": "password123"
+}
+
+### ③ TODO 생성 (토큰 필요)
+# 여기에 로그인에서 얻은 토큰을 넣어주세요
+POST http://localhost:3000/todos
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTA0NjgxNzQ4MjUiLCJpYXQiOjE3NTA0NjgxNzYsImV4cCI6MTc1MDQ3MTc3Nn0.9A43cD1CeKl3xlYOWK98rGa1xigWc4z49-wU6pP-Bi0
+Content-Type: application/json
+
+{
+  "title": "Test my first todo",
+  "description": "This is a test item"
+}
+
+### ④ TODO 전체 조회 (토큰 필요)
+GET http://localhost:3000/todos
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTA0NjgxNzQ4MjUiLCJpYXQiOjE3NTA0NjgxNzYsImV4cCI6MTc1MDQ3MTc3Nn0.9A43cD1CeKl3xlYOWK98rGa1xigWc4z49-wU6pP-Bi0
+
+### ⑤ 특정 TODO 수정 (토큰 필요)
+PUT http://localhost:3000/todos/1750468188780
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTA0NjgxNzQ4MjUiLCJpYXQiOjE3NTA0NjgxNzYsImV4cCI6MTc1MDQ3MTc3Nn0.9A43cD1CeKl3xlYOWK98rGa1xigWc4z49-wU6pP-Bi0
+Content-Type: application/json
+
+{
+  "title": "Modified Title",
+  "completed": true
+}
+
+### ⑥ 특정 TODO 삭제 (토큰 필요)
+DELETE http://localhost:3000/todos/{{TODO_ID}}
+Authorization: Bearer {{TOKEN}}
+
+### ⑦ 위조 토큰으로 TODO 작성 시도
+POST http://localhost:3000/todos
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTA0NjgxNzQ4MjUiLCJpYXQiOjE3NTA0NjgxNzYsImV4cCI6MTc1MDQ3MTc3Nn0.
+Content-Type: application/json
+
+{
+  "title": "This should not be allowed",
+  "description": "If this succeeds, your JWT verification is broken."
+}

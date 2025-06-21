@@ -1,118 +1,187 @@
 const express = require('express');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const bodyParser = require('body-parser');
-const fs = require('fs');
-
+const { body, validationResult } = require('express-validator');
 const app = express();
-app.use(bodyParser.json());
 
-// Mock database
-const votes = {};
+// Security middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Configuration (using direct values instead of dotenv)
+const JWT_SECRET = 'your-ultra-secure-survey-secret-789'; // Replace with your actual secret
+const JWT_EXPIRY = '1h';
+const SALT_ROUNDS = 12;
+
+// In-memory storage (replace with database in production)
 const users = [
-    { id: 1, username: 'voter1', eligible: true },
-    { id: 2, username: 'voter2', eligible: false }
+    {
+        id: 'admin1',
+        email: 'admin@survey.com',
+        password: '$2b$12$Yr6pBeAVbQjd1MEqKWt6q.QUc61E8Xys0js9.Uxk/8HYE4HqJbACq', // 'admin123'
+        role: 'admin'
+    }
 ];
+const surveys = [];
+const responses = [];
 
-// Problematic secret configuration
-function getJwtSecret() {
-    try {
-        // Simulate failed config loading
-        if (!fs.existsSync('config.json')) {
-            console.error('Config file missing, falling back to null');
-            return null;  // VULNERABILITY: Fallback to null
-        }
-        return require('./config.json').jwtSecret;
-    } catch (err) {
-        console.error('Config error:', err);
-        return null;  // VULNERABILITY: Fallback to null
-    }
-}
+bcrypt.hash('admin123', 12).then(console.log);
 
-const JWT_SECRET = getJwtSecret();
+// Authentication middleware
+const authenticateJWT = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: 'Authorization header missing' });
 
-// Login endpoint (secure part)
-app.post('/login', (req, res) => {
-    const { username } = req.body;
-    const user = users.find(u => u.username === username);
-
-    if (!user) {
-        return res.status(401).json({ error: 'User not found' });
-    }
-
-    // Generate JWT with eligibility info
-    const token = jwt.sign(
-        {
-            userId: user.id,
-            eligible: user.eligible,
-            voted: false
-        },
-        JWT_SECRET || 'temp-secret-123', // Temporary secret for demo
-        { expiresIn: '1h' }
-    );
-
-    res.json({ token });
-});
-
-// Vulnerable JWT verification middleware
-const verifyVoterToken = (req, res, next) => {
-    const token = req.headers['authorization']?.split(' ')[1];
-
-    if (!token) {
-        return res.status(401).json({ error: 'Token required' });
-    }
-
-    // VULNERABILITY: Accepts null secret, allowing 'alg: none'
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
-        if (err) {
-            return res.status(403).json({ error: 'Invalid token' });
-        }
-
-        if (typeof decoded.eligible !== 'boolean') {
-            return res.status(400).json({ error: 'Invalid token payload' });
-        }
-
-        req.voter = decoded;
+    const token = authHeader.split(' ')[1];
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ error: 'Invalid or expired token' });
+        req.user = user;
         next();
     });
 };
 
-// Vote submission endpoint
-app.post('/vote', verifyVoterToken, (req, res) => {
-    const { candidate } = req.body;
-    const { voter } = req;
+// Admin authorization middleware
+const requireAdmin = (req, res, next) => {
+    if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
+    next();
+};
 
-    if (!voter.eligible) {
-        return res.status(403).json({ error: 'Voter not eligible' });
+// User Registration
+app.post('/register',
+    body('email').isEmail().normalizeEmail(),
+    body('password').isLength({ min: 8 }),
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+        try {
+            const { email, password } = req.body;
+            if (users.some(u => u.email === email)) {
+                return res.status(400).json({ error: 'Email already registered' });
+            }
+
+            const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+            users.push({
+                id: Date.now().toString(),
+                email,
+                password: hashedPassword,
+                role: 'user'
+            });
+            res.status(201).json({ message: 'User registered successfully' });
+        } catch (err) {
+            console.error('Registration error:', err);
+            res.status(500).json({ error: 'Registration failed' });
+        }
     }
+);
 
-    if (voter.voted) {
-        return res.status(400).json({ error: 'Already voted' });
+// User Login
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    const user = users.find(u => u.email === email);
+    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+
+    try {
+        const validPassword = await bcrypt.compare(password, user.password);
+        if (!validPassword) return res.status(401).json({ error: 'Invalid credentials' });
+
+        const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRY }
+        );
+        res.json({ token });
+    } catch (err) {
+        console.error('Login error:', err);
+        res.status(500).json({ error: 'Login failed' });
     }
-
-    if (!candidate) {
-        return res.status(400).json({ error: 'Candidate required' });
-    }
-
-    // Record vote
-    votes[voter.userId] = candidate;
-    res.json({ success: true, message: `Vote for ${candidate} recorded` });
 });
 
-// Results endpoint (public)
-app.get('/results', (req, res) => {
-    const tally = {};
-    Object.values(votes).forEach(v => {
-        tally[v] = (tally[v] || 0) + 1;
-    });
-    res.json(tally);
-});
+// Survey Endpoints
 
-// Server startup validation
-app.listen(3000, () => {
-    console.log('Voting server running on port 3000');
-    console.log(`JWT_SECRET is: ${JWT_SECRET ? 'set' : 'NOT SET - SYSTEM IS VULNERABLE'}`);
-    
-    if (!JWT_SECRET) {
-        console.error('SECURITY ALERT: JWT verification is disabled!');
+// Create new survey (Admin only)
+app.post('/surveys', authenticateJWT, requireAdmin,
+    body('question').isString().notEmpty(),
+    body('options').isArray({ min: 2 }),
+    (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+        try {
+            const survey = {
+                id: Date.now().toString(),
+                question: req.body.question,
+                options: req.body.options,
+                createdBy: req.user.id,
+                createdAt: new Date().toISOString()
+            };
+            surveys.push(survey);
+            res.status(201).json(survey);
+        } catch (err) {
+            console.error('Survey creation error:', err);
+            res.status(500).json({ error: 'Failed to create survey' });
+        }
+    }
+);
+
+// Submit survey response (Authenticated users)
+app.post('/responses', authenticateJWT,
+    body('surveyId').isString().notEmpty(),
+    body('answer').isString().notEmpty(),
+    (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+
+        try {
+            const survey = surveys.find(s => s.id === req.body.surveyId);
+            if (!survey) return res.status(404).json({ error: 'Survey not found' });
+
+            if (!survey.options.includes(req.body.answer)) {
+                return res.status(400).json({ error: 'Invalid answer for this survey' });
+            }
+
+            responses.push({
+                id: Date.now().toString(),
+                surveyId: req.body.surveyId,
+                userId: req.user.id,
+                answer: req.body.answer,
+                submittedAt: new Date().toISOString()
+            });
+            res.status(201).json({ message: 'Response submitted successfully' });
+        } catch (err) {
+            console.error('Response submission error:', err);
+            res.status(500).json({ error: 'Failed to submit response' });
+        }
+    }
+);
+
+// Get survey results (Admin only)
+app.get('/surveys/:id/results', authenticateJWT, requireAdmin, (req, res) => {
+    try {
+        const survey = surveys.find(s => s.id === req.params.id);
+        if (!survey) return res.status(404).json({ error: 'Survey not found' });
+
+        const surveyResponses = responses.filter(r => r.surveyId === req.params.id);
+        const result = {
+            question: survey.question,
+            totalResponses: surveyResponses.length,
+            breakdown: survey.options.reduce((acc, option) => {
+                acc[option] = surveyResponses.filter(r => r.answer === option).length;
+                return acc;
+            }, {})
+        };
+        res.json(result);
+    } catch (err) {
+        console.error('Results retrieval error:', err);
+        res.status(500).json({ error: 'Failed to get survey results' });
     }
 });
+
+// Error handling
+app.use((err, req, res, next) => {
+    console.error('Server error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+});
+
+const PORT = 3001;
+app.listen(PORT, () => console.log(`Secure Survey API running on port ${PORT}`));

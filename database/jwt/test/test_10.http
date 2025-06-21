@@ -1,0 +1,83 @@
+### 회원가입
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "todouser@example.com",
+  "password": "pass123"
+}
+
+### 로그인
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "alice",
+  "password": "password123"
+}
+
+### 관리자 회원가입
+POST http://localhost:3001/register
+Content-Type: application/json
+
+{
+  "email": "admin@survey.com",
+  "password": "admin123",
+  "role": "admin"
+}
+
+### 일반 사용자 회원가입
+POST http://localhost:3001/register
+Content-Type: application/json
+
+{
+  "email": "surveyuser@example.com",
+  "password": "pass4123"
+}
+
+### 로그인 (일반 사용자)
+POST http://localhost:3001/login
+Content-Type: application/json
+
+{
+  "email": "surveyuser@example.com",
+  "password": "pass4123"
+}
+
+### 설문 만들기
+POST http://localhost:3001/surveys
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluMSIsImVtYWlsIjoiYWRtaW5Ac3VydmV5LmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1MDQ2NzIzMCwiZXhwIjoxNzUwNDcwODMwfQ.GtTe-7897BbPXMsu0yhnk-T1IMbh1T1FtcHhJ3oVi2s
+Content-Type: application/json
+
+{
+  "question": "Yes or No?",
+  "options": ["Yes", "No"]
+}
+
+
+### 설문 응답 제출
+### Submit Survey Response
+POST http://localhost:3001/responses
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTA0Njc1MDYyMDQiLCJlbWFpbCI6InN1cnZleXVzZXJAZXhhbXBsZS5jb20iLCJyb2xlIjoidXNlciIsImlhdCI6MTc1MDQ2NzYzMywiZXhwIjoxNzUwNDcxMjMzfQ.3fhc2L7-XCwQcoB7ot6WqwFUKq6a_miTMVIbXrl_deQ
+Content-Type: application/json
+
+{
+  "surveyId": "1750467669363",
+  "answer": "Yes"
+}
+
+
+
+### 로그인 (관리자)
+POST http://localhost:3001/login
+Content-Type: application/json
+
+{
+  "email": "admin@survey.com",
+  "password": "admin123"
+}
+
+
+### 설문 결과 조회
+GET http://localhost:3001/surveys/1750467669363/results
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImFkbWluMSIsImVtYWlsIjoiYWRtaW5Ac3VydmV5LmNvbSIsInJvbGUiOiJhZG1pbiIsImlhdCI6MTc1MDQ2NzIzMCwiZXhwIjoxNzUwNDcwODMwfQ.GtTe-7897BbPXMsu0yhnk-T1IMbh1T1FtcHhJ3oVi2s

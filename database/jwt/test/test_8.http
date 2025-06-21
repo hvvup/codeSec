@@ -1,0 +1,43 @@
+### ① 회원가입 (User Registration)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user1@example.com",
+  "password": "password123"
+}
+
+### ② 로그인 (User Login)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user1@example.com",
+  "password": "password123"
+}
+
+### ③ 예약 생성 (정상 토큰 필요)
+# 여기 {{TOKEN}} 자리에 로그인 후 발급받은 토큰 넣기
+POST http://localhost:3000/reservations
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTA0Njg2MzE4MTEiLCJlbWFpbCI6InVzZXIxQGV4YW1wbGUuY29tIiwiaWF0IjoxNzUwNDY4NjMzLCJleHAiOjE3NTA0NzIyMzN9.tFAwHMi4_IkTWLt1QPiExsrGVxHzFc1Mh0F5gfOrMKY
+Content-Type: application/json
+
+{
+  "date": "2025-07-01",
+  "time": "18:30",
+  "partySize": 4
+}
+
+### ④ 예약 목록 조회 (정상 토큰 필요)
+GET http://localhost:3000/reservations
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjE3NTA0Njg2MzE4MTEiLCJlbWFpbCI6InVzZXIxQGV4YW1wbGUuY29tIiwiaWF0IjoxNzUwNDY4NjMzLCJleHAiOjE3NTA0NzIyMzN9.tFAwHMi4_IkTWLt1QPiExsrGVxHzFc1Mh0F5gfOrMKY
+
+### ⑤ 위조된 토큰으로 예약 생성 시도
+POST http://localhost:3000/reservations
+Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJpZCI6IjE3NTA0Njg2MzE4MTEiLCJlbWFpbCI6InVzZXIxQGV4YW1wbGUuY29tIiwiaWF0IjoxNzUwNDY4NjMzLCJleHAiOjE3NTA0NzIyMzN9.
+
+{
+  "date": "2025-07-02",
+  "time": "19:00",
+  "partySize": 2
+}

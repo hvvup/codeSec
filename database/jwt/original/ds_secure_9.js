@@ -1,133 +1,159 @@
 const express = require('express');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const bodyParser = require('body-parser');
-const fs = require('fs');
-const path = require('path');
-
+const { body, validationResult } = require('express-validator');
 const app = express();
-app.use(bodyParser.json());
 
-// Mock database
-const reservations = [];
+// Security middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
+// Configuration
+const JWT_SECRET = process.env.JWT_SECRET || 'your-ultra-secure-secret-key-456';
+const JWT_EXPIRY = '1h';
+const SALT_ROUNDS = 12;
+
+// In-memory database (replace with real DB in production)
 const users = [
-    { id: 1, username: 'guest1', password: 'hashed_pass_1' }
+    {
+        id: 'admin1',
+        email: 'admin@example.com',
+        password: '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', // 'secret'
+        role: 'admin'
+    }
 ];
 
-// Problematic configuration loading
-let JWT_SECRET;
-try {
-    // Simulate reading from invalid config file
-    const configPath = path.join(__dirname, 'invalid_config.json');
-    JWT_SECRET = fs.existsSync(configPath) 
-        ? JSON.parse(fs.readFileSync(configPath)).jwtSecret 
-        : undefined; // Results in undefined when file doesn't exist
-} catch (err) {
-    JWT_SECRET = ''; // Empty string when parsing fails
-}
-
-// Login endpoint
-app.post('/login', (req, res) => {
-    const { username, password } = req.body;
-    const user = users.find(u => u.username === username);
-
-    if (!user || user.password !== `hashed_pass_${user.id}`) {
-        return res.status(401).json({ error: 'Invalid credentials' });
+// Middleware to verify JWT
+const authenticateJWT = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        return res.status(401).json({ error: 'Authorization header missing' });
     }
 
-    // Generate JWT with reservation data
-    const token = jwt.sign(
-        {
-            userId: user.id,
-            reservations: reservations.filter(r => r.userId === user.id)
-        },
-        'temporary-secret-for-demo' // Using hardcoded secret for token generation
-    );
-
-    res.json({ token });
-});
-
-// Vulnerable JWT verification middleware
-const verifyToken = (req, res, next) => {
-    const token = req.headers['authorization']?.split(' ')[1];
-
+    const token = authHeader.split(' ')[1];
     if (!token) {
-        return res.status(401).json({ error: 'Authorization required' });
+        return res.status(401).json({ error: 'Token missing' });
     }
 
-    // VULNERABILITY: Using potentially empty/undefined secret
-    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+    jwt.verify(token, JWT_SECRET, (err, user) => {
         if (err) {
-            return res.status(403).json({ error: 'Invalid token' });
+            return res.status(403).json({ error: 'Invalid or expired token' });
         }
-
-        if (!decoded.userId) {
-            return res.status(400).json({ error: 'Malformed token' });
-        }
-
-        req.user = decoded;
+        req.user = user;
         next();
     });
 };
 
-// Create reservation endpoint
-app.post('/create-reservation', verifyToken, (req, res) => {
-    const { checkIn, checkOut, roomType } = req.body;
+// Middleware to check admin role
+const requireAdmin = (req, res, next) => {
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+    }
+    next();
+};
 
-    if (!checkIn || !checkOut || !roomType) {
-        return res.status(400).json({ error: 'Missing reservation details' });
+// User Registration
+app.post('/register',
+    body('email').isEmail().normalizeEmail(),
+    body('password').isLength({ min: 8 }),
+    async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
+        }
+
+        try {
+            const { email, password } = req.body;
+            const existingUser = users.find(user => user.email === email);
+            if (existingUser) {
+                return res.status(400).json({ error: 'Email already registered' });
+            }
+
+            const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
+            const user = {
+                id: Date.now().toString(),
+                email,
+                password: hashedPassword,
+                role: 'user' // Default role
+            };
+            users.push(user);
+            res.status(201).json({ message: 'User registered successfully' });
+        } catch (err) {
+            console.error('Registration error:', err);
+            res.status(500).json({ error: 'Registration failed' });
+        }
+    }
+);
+
+// User Login
+app.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    const user = users.find(user => user.email === email);
+    
+    if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const newReservation = {
-        id: reservations.length + 1,
-        userId: req.user.userId,
-        checkIn,
-        checkOut,
-        roomType,
-        status: 'confirmed'
-    };
-
-    reservations.push(newReservation);
-    res.status(201).json(newReservation);
-});
-
-// Modify reservation endpoint
-app.put('/modify-reservation/:id', verifyToken, (req, res) => {
-    const reservationId = parseInt(req.params.id);
-    const updates = req.body;
-
-    const reservation = reservations.find(r => 
-        r.id === reservationId && 
-        r.userId === req.user.userId
-    );
-
-    if (!reservation) {
-        return res.status(404).json({ error: 'Reservation not found' });
+    try {
+        const passwordMatch = await bcrypt.compare(password, user.password);
+        if (!passwordMatch) {
+            return res.status(401).json({ error: 'Invalid credentials' });
+        }
+        
+        const token = jwt.sign(
+            { id: user.id, email: user.email, role: user.role },
+            JWT_SECRET,
+            { expiresIn: JWT_EXPIRY }
+        );
+        res.json({ token });
+    } catch (err) {
+        console.error('Login error:', err);
+        res.status(500).json({ error: 'Login failed' });
     }
-
-    // Apply updates
-    Object.assign(reservation, updates);
-    res.json(reservation);
 });
 
-// Get reservations endpoint
-app.get('/reservations', verifyToken, (req, res) => {
-    const userReservations = reservations.filter(
-        r => r.userId === req.user.userId
-    );
-    res.json(userReservations);
+// Protected Admin Route
+app.get('/admin/statistics', authenticateJWT, requireAdmin, (req, res) => {
+    try {
+        // In a real app, you would fetch actual statistics here
+        const stats = {
+            totalUsers: users.length,
+            activeUsers: users.length,
+            adminCount: users.filter(u => u.role === 'admin').length
+        };
+        res.json(stats);
+    } catch (err) {
+        console.error('Statistics error:', err);
+        res.status(500).json({ error: 'Failed to get statistics' });
+    }
 });
 
-// Error handler
+// Protected User Route (example)
+app.get('/profile', authenticateJWT, (req, res) => {
+    try {
+        const user = users.find(u => u.id === req.user.id);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json({
+            id: user.id,
+            email: user.email,
+            role: user.role
+        });
+    } catch (err) {
+        console.error('Profile error:', err);
+        res.status(500).json({ error: 'Failed to get profile' });
+    }
+});
+
+// Error handling middleware
 app.use((err, req, res, next) => {
-    console.error(err.stack);
+    console.error('Server error:', err);
     res.status(500).json({ error: 'Internal server error' });
 });
 
+// Start server
 const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`JWT_SECRET is: "${JWT_SECRET}" (${typeof JWT_SECRET})`);
-    if (!JWT_SECRET) {
-        console.error('SECURITY WARNING: JWT_SECRET is not properly configured!');
-    }
+    console.log(`Secure API server running on port ${PORT}`);
 });
