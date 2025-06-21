@@ -1,119 +1,95 @@
 const express = require('express');
 const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
 const rateLimit = require('express-rate-limit');
-const { exec } = require('child_process');
-const { v4: uuidv4 } = require('uuid');
+const lame = require('lame');
+const wav = require('wav');
+const { PassThrough } = require('stream');
+const fs = require('fs');
+const os = require('os');
 
 const app = express();
 
-// Configure rate limiting
+// Rate limiting configuration
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5, // limit each IP to 5 requests per windowMs
-  message: 'Too many conversion requests from this IP, please try again later',
-  standardHeaders: true,
-  legacyHeaders: false,
+  message: 'Too many conversion requests from this IP, please try again after 15 minutes'
 });
 
-// Secure temporary directory setup
-const tempDir = path.join(__dirname, 'secure_temp');
-if (!fs.existsSync(tempDir)) {
-  fs.mkdirSync(tempDir, { mode: 0o700 }); // Restrict directory permissions
-}
-
-// Configure multer for secure file uploads
+// File upload configuration
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: tempDir,
-    filename: (req, file, cb) => {
-      const uniqueName = `${uuidv4()}${path.extname(file.originalname)}`;
-      cb(null, uniqueName);
-    }
-  }),
+  storage: multer.memoryStorage(),
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 5 * 1024 * 1024, // 5MB limit
     files: 1
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype !== 'audio/mpeg') {
+    if (file.mimetype !== 'audio/mpeg' || !file.originalname.match(/\.mp3$/i)) {
       return cb(new Error('Only MP3 audio files are allowed'), false);
     }
     cb(null, true);
   }
 });
 
-// Audio conversion endpoint with rate limiting
+// Error handling middleware
+const errorHandler = (err, req, res, next) => {
+  console.error('Conversion error:', err.message);
+  res.status(400).json({ error: err.message || 'Audio conversion failed' });
+};
+
+// Audio conversion endpoint
 app.post('/convert-audio', limiter, upload.single('audio'), (req, res, next) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No audio file provided' });
-  }
-
-  const inputPath = req.file.path;
-  const outputPath = path.join(tempDir, `${uuidv4()}.wav`);
-
-  // Convert using FFmpeg with proper error handling
-  exec(`ffmpeg -i "${inputPath}" -acodec pcm_s16le -ar 44100 "${outputPath}"`, (error) => {
-    // Clean up input file regardless of conversion result
-    fs.unlink(inputPath, (unlinkErr) => {
-      if (unlinkErr) console.error('Error deleting input file:', unlinkErr);
-    });
-
-    if (error) {
-      console.error('Conversion error:', error);
-      return res.status(500).json({ error: 'Audio conversion failed' });
+  try {
+    if (!req.file) {
+      throw new Error('No audio file uploaded');
     }
 
-    // Stream the converted file and then delete it
+    // Create streams for conversion
+    const mp3Stream = new PassThrough();
+    mp3Stream.end(req.file.buffer);
+
+    const decoder = new lame.Decoder();
+    const encoder = new wav.Writer();
+
+    // Handle conversion errors
+    decoder.on('error', (err) => {
+      throw new Error(`MP3 decoding failed: ${err.message}`);
+    });
+
+    encoder.on('error', (err) => {
+      throw new Error(`WAV encoding failed: ${err.message}`);
+    });
+
+    // Set response headers
     res.setHeader('Content-Type', 'audio/wav');
     res.setHeader('Content-Disposition', 'attachment; filename="converted.wav"');
 
-    const stream = fs.createReadStream(outputPath);
-    stream.pipe(res);
-    stream.on('end', () => {
-      fs.unlink(outputPath, (err) => {
-        if (err) console.error('Error deleting output file:', err);
+    // Pipe the conversion chain
+    mp3Stream
+      .pipe(decoder)
+      .pipe(encoder)
+      .pipe(res)
+      .on('finish', () => {
+        console.log('Audio conversion completed successfully');
       });
-    });
-    stream.on('error', (err) => {
-      console.error('Stream error:', err);
-      fs.unlink(outputPath, () => {});
-      res.status(500).end();
-    });
-  });
-});
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    return res.status(400).json({ error: err.message });
-  } else if (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Internal server error' });
+  } catch (err) {
+    next(err);
   }
-  next();
 });
 
-// Security headers middleware
-app.use((req, res, next) => {
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  next();
-});
+app.use(errorHandler);
 
+// Server configuration
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
 
-// Cleanup temp directory on server shutdown
-process.on('SIGTERM', () => {
-  fs.readdir(tempDir, (err, files) => {
-    if (err) return;
-    files.forEach(file => {
-      fs.unlink(path.join(tempDir, file), () => {});
-    });
-  });
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+  server.close(() => process.exit(1));
 });
+
+module.exports = app;
