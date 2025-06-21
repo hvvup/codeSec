@@ -1,142 +1,138 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
-const helmet = require('helmet');
 const { body, validationResult } = require('express-validator');
 
 const app = express();
-
-// Security middleware
-app.use(helmet());
-app.use(express.json());
-app.use(cookieParser());
-
-// Configuration
 const PORT = process.env.PORT || 3000;
-const ADMIN_SESSION_EXPIRY = 1800000; // 30 minutes in milliseconds
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secure-admin-secret-change-me';
+const ADMIN_SECRET = 'admin-secret-key-123'; // In production, use environment variable
+const SESSION_DURATION = '1h'; // Session expires in 1 hour
 
 // Hardcoded admin credentials (in production, use proper database with hashed passwords)
 const ADMIN_CREDENTIALS = {
-    username: 'admin',
-    // Password is "SecureAdmin123!" hashed with bcrypt
-    passwordHash: '$2a$10$8vZP9x3zqkRlT7s5VbYQw.3JfLdG2hNc5vB6yDmKg7i8pQs9rXt1u'
+  username: 'admin',
+  password: 'secureAdminPassword123'
 };
 
-// Mock data for dashboard
-const mockDashboardData = {
-    stats: {
-        totalUsers: 1423,
-        activeToday: 287,
-        newSignups: 24
-    },
-    recentLogs: [
-        { id: 1, action: 'user_login', timestamp: new Date().toISOString() },
-        { id: 2, action: 'content_update', timestamp: new Date(Date.now() - 10000).toISOString() },
-        { id: 3, action: 'system_backup', timestamp: new Date(Date.now() - 3600000).toISOString() }
-    ]
+// Mock admin dashboard data
+const ADMIN_DATA = {
+  stats: {
+    users: 1423,
+    activeSessions: 87,
+    newSignups: 23
+  },
+  recentLogs: [
+    'User login attempt failed (IP: 192.168.1.1)',
+    'New user registered: test@example.com',
+    'Password reset requested for admin@example.com'
+  ]
 };
+
+// Middleware setup
+app.use(express.json());
+app.use(cookieParser());
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
+
+// Input validation for admin login
+const validateAdminLogin = [
+  body('username').notEmpty().withMessage('Username is required'),
+  body('password').notEmpty().withMessage('Password is required')
+];
+
+// Admin login endpoint
+app.post('/admin-login', validateAdminLogin, (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { username, password } = req.body;
+
+  if (username !== ADMIN_CREDENTIALS.username || password !== ADMIN_CREDENTIALS.password) {
+    console.warn(`Failed admin login attempt from IP: ${req.ip}`);
+    return res.status(401).json({ message: 'Invalid admin credentials' });
+  }
+
+  // Generate JWT token for admin session
+  const token = jwt.sign(
+    { 
+      username: ADMIN_CREDENTIALS.username,
+      role: 'admin',
+      ip: req.ip
+    },
+    ADMIN_SECRET,
+    { expiresIn: SESSION_DURATION }
+  );
+
+  // Set secure admin session cookie
+  res.cookie('adminSession', token, {
+    httpOnly: true,
+    secure: true,
+    maxAge: 3600000, // 1 hour in milliseconds
+    sameSite: 'strict'
+  });
+
+  console.log(`Admin login successful for ${username}`);
+  res.status(200).json({ message: 'Admin login successful' });
+});
 
 // Middleware to verify admin session
 const verifyAdminSession = (req, res, next) => {
-    const token = req.cookies.adminSession;
-    
-    if (!token) {
-        return res.status(403).json({ error: 'Admin authentication required' });
+  const token = req.cookies.adminSession;
+
+  if (!token) {
+    console.warn('Admin access attempt without session token');
+    return res.sendStatus(403);
+  }
+
+  jwt.verify(token, ADMIN_SECRET, (err, decoded) => {
+    if (err) {
+      console.warn('Invalid admin session token:', err.message);
+      return res.status(403).json({ message: 'Invalid admin session' });
     }
 
-    try {
-        const decoded = jwt.verify(token, JWT_SECRET);
-        if (decoded.role !== 'admin') {
-            throw new Error('Invalid role');
-        }
-        req.admin = decoded;
-        next();
-    } catch (error) {
-        console.error('Admin session verification failed:', error);
-        res.clearCookie('adminSession');
-        res.status(403).json({ error: 'Invalid or expired admin session' });
+    // Additional security checks
+    if (decoded.username !== ADMIN_CREDENTIALS.username || decoded.role !== 'admin') {
+      console.warn('Admin session token with invalid claims');
+      return res.status(403).json({ message: 'Invalid admin privileges' });
     }
+
+    req.admin = decoded;
+    next();
+  });
 };
-
-// Admin login endpoint
-app.post('/admin-login', 
-    [
-        body('username').trim().notEmpty(),
-        body('password').notEmpty()
-    ],
-    async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-
-        const { username, password } = req.body;
-
-        try {
-            // Verify credentials
-            if (username !== ADMIN_CREDENTIALS.username) {
-                console.warn(`Failed admin login attempt with username: ${username}`);
-                return res.status(401).json({ error: 'Invalid credentials' });
-            }
-
-            const passwordMatch = await bcrypt.compare(password, ADMIN_CREDENTIALS.passwordHash);
-            if (!passwordMatch) {
-                console.warn(`Failed admin login attempt for user: ${username}`);
-                return res.status(401).json({ error: 'Invalid credentials' });
-            }
-
-            // Generate JWT token
-            const token = jwt.sign(
-                { 
-                    username: ADMIN_CREDENTIALS.username,
-                    role: 'admin',
-                    iat: Math.floor(Date.now() / 1000)
-                },
-                JWT_SECRET,
-                { expiresIn: '30m' }
-            );
-
-            // Set secure admin session cookie
-            res.cookie('adminSession', token, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: ADMIN_SESSION_EXPIRY,
-                sameSite: 'strict'
-            });
-
-            console.log(`Admin login successful for: ${username}`);
-            res.status(200).json({ message: 'Admin login successful' });
-        } catch (error) {
-            console.error('Admin login error:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    }
-);
 
 // Protected admin dashboard
 app.get('/admin-dashboard', verifyAdminSession, (req, res) => {
-    console.log(`Admin dashboard accessed by: ${req.admin.username}`);
-    res.status(200).json({
-        message: 'Welcome to the admin dashboard',
-        admin: req.admin.username,
-        data: mockDashboardData
-    });
+  console.log(`Admin dashboard accessed by ${req.admin.username} from IP ${req.admin.ip}`);
+  
+  // Return mock admin data
+  res.status(200).json({
+    message: 'Welcome to Admin Dashboard',
+    user: req.admin.username,
+    data: ADMIN_DATA
+  });
 });
 
 // Admin logout endpoint
 app.post('/admin-logout', verifyAdminSession, (req, res) => {
-    res.clearCookie('adminSession', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production'
-    });
-    res.status(200).json({ message: 'Admin logout successful' });
+  res.clearCookie('adminSession', {
+    httpOnly: true,
+    secure: true
+  });
+  res.status(200).json({ message: 'Admin logout successful' });
 });
 
-// Start server
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Admin system error:', err.stack);
+  res.status(500).json({ message: 'Admin system error' });
+});
+
 app.listen(PORT, () => {
-    console.log(`Admin system running on port ${PORT}`);
-    console.log(`Admin login: POST http://localhost:${PORT}/admin-login`);
-    console.log(`Admin dashboard: GET http://localhost:${PORT}/admin-dashboard`);
+  console.log(`Admin system running on port ${PORT}`);
+  console.warn('WARNING: This implementation uses plain text credentials - not suitable for production');
 });

@@ -1,145 +1,138 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
-const bcrypt = require('bcryptjs');
 const { body, validationResult } = require('express-validator');
-const helmet = require('helmet');
-const crypto = require('crypto');
 
 const app = express();
-
-// Security middleware
-app.use(helmet());
-app.use(express.json());
-app.use(cookieParser());
-
-// Configuration
 const PORT = process.env.PORT || 3000;
-const SESSION_SECRET = process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
-const SESSION_EXPIRY = 3600000; // 1 hour in milliseconds
 
-// Mock database
-const users = [
-    {
-        id: 1,
-        username: 'blogger',
-        // Password is "SecureBlog123!" hashed with bcrypt
-        passwordHash: '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi'
-    }
-];
-
-const blogPosts = [];
-
-// Authentication middleware
-const authenticateUser = (req, res, next) => {
-    const sessionToken = req.cookies.authCookie;
-    
-    if (!sessionToken) {
-        return res.status(401).json({ error: 'Authentication required' });
-    }
-
-    try {
-        // In a real app, you would verify a JWT or check a session store
-        const user = users.find(u => u.sessionToken === sessionToken);
-        if (!user) {
-            throw new Error('Invalid session');
-        }
-        
-        req.user = user;
-        next();
-    } catch (error) {
-        console.error('Authentication failed:', error);
-        res.clearCookie('authCookie');
-        res.status(401).json({ error: 'Invalid session' });
-    }
+// Simulated user database (in production, use proper database with hashed passwords)
+const USERS = {
+  'blogger': {
+    username: 'blogger',
+    password: 'bloggerPass123' // In production, NEVER store plain text passwords
+  }
 };
 
-// Login route
-app.post('/login', 
-    [
-        body('username').trim().notEmpty(),
-        body('password').notEmpty()
-    ],
-    async (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+// Simulated blog post storage
+let blogPosts = [];
 
-        const { username, password } = req.body;
-        const user = users.find(u => u.username === username);
+// Middleware setup
+app.use(express.json());
+app.use(cookieParser());
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
 
-        try {
-            if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
-                console.warn(`Failed login attempt for username: ${username}`);
-                return res.status(401).json({ error: 'Invalid credentials' });
-            }
+// Login validation rules
+const loginValidation = [
+  body('username').notEmpty().withMessage('Username is required'),
+  body('password').notEmpty().withMessage('Password is required')
+];
 
-            // Generate session token
-            const sessionToken = crypto.randomBytes(32).toString('hex');
-            user.sessionToken = sessionToken;
+// Login endpoint
+app.post('/login', loginValidation, (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
-            // Set secure cookie
-            res.cookie('authCookie', sessionToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: SESSION_EXPIRY,
-                sameSite: 'strict'
-            });
+  const { username, password } = req.body;
 
-            res.status(200).json({ message: 'Login successful' });
-        } catch (error) {
-            console.error('Login error:', error);
-            res.status(500).json({ error: 'Internal server error' });
-        }
-    }
-);
+  if (!USERS[username] || USERS[username].password !== password) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
 
-// Create post route (protected)
-app.post('/create-post', 
-    authenticateUser,
-    [
-        body('title').trim().notEmpty().isLength({ max: 100 }).escape(),
-        body('content').trim().notEmpty().isLength({ min: 10 }).escape()
-    ],
-    (req, res) => {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
+  // Set secure authentication cookie
+  res.cookie('authCookie', `${username}:${Date.now()}`, {
+    httpOnly: true,
+    secure: true,
+    maxAge: 3600000, // 1 hour expiration
+    sameSite: 'strict'
+  });
 
-        const { title, content } = req.body;
-        const newPost = {
-            id: blogPosts.length + 1,
-            title,
-            content,
-            author: req.user.username,
-            createdAt: new Date().toISOString()
-        };
+  res.status(200).json({ message: 'Login successful' });
+});
 
-        blogPosts.push(newPost);
-        res.status(201).json({ message: 'Post created successfully', post: newPost });
-    }
-);
+// Middleware to verify authentication
+const authenticateUser = (req, res, next) => {
+  const authCookie = req.cookies.authCookie;
 
-// Get posts route (public)
+  if (!authCookie) {
+    return res.status(403).json({ message: 'Authentication required' });
+  }
+
+  const [username, timestamp] = authCookie.split(':');
+  
+  // Check if cookie is expired (1 hour)
+  if (Date.now() - parseInt(timestamp) > 3600000) {
+    return res.status(403).json({ message: 'Session expired' });
+  }
+
+  if (!USERS[username]) {
+    return res.status(403).json({ message: 'Invalid user session' });
+  }
+
+  req.user = username;
+  next();
+};
+
+// Post creation validation
+const postValidation = [
+  body('title').trim().notEmpty().withMessage('Title is required'),
+  body('body').trim().notEmpty().withMessage('Content is required')
+];
+
+// Protected post creation endpoint
+app.post('/create-post', authenticateUser, postValidation, (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { title, body } = req.body;
+
+  const newPost = {
+    id: Date.now().toString(),
+    title: title,
+    body: body,
+    author: req.user,
+    createdAt: new Date().toISOString()
+  };
+
+  blogPosts.unshift(newPost); // Add new post to beginning of array
+  console.log(`New post created by ${req.user}: "${title}"`);
+
+  res.status(201).json({ 
+    message: 'Post created successfully',
+    post: newPost
+  });
+});
+
+// Public posts endpoint
 app.get('/posts', (req, res) => {
-    res.status(200).json({ posts: blogPosts });
+  res.status(200).json({
+    count: blogPosts.length,
+    posts: blogPosts
+  });
 });
 
-// Logout route
-app.post('/logout', authenticateUser, (req, res) => {
-    req.user.sessionToken = null;
-    res.clearCookie('authCookie', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production'
-    });
-    res.status(200).json({ message: 'Logout successful' });
+// Logout endpoint
+app.post('/logout', (req, res) => {
+  res.clearCookie('authCookie', {
+    httpOnly: true,
+    secure: true
+  });
+  res.status(200).json({ message: 'Logged out successfully' });
 });
 
-// Start server
+// Error handling
+app.use((err, req, res, next) => {
+  console.error('Blog system error:', err);
+  res.status(500).json({ message: 'Internal server error' });
+});
+
 app.listen(PORT, () => {
-    console.log(`Blog system running on port ${PORT}`);
-    console.log(`Login: POST http://localhost:${PORT}/login`);
-    console.log(`Create post: POST http://localhost:${PORT}/create-post`);
-    console.log(`View posts: GET http://localhost:${PORT}/posts`);
+  console.log(`Blog system running on port ${PORT}`);
+  console.warn('Security Note: This implementation uses plain text credentials - not production ready');
 });
