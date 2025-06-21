@@ -82,6 +82,37 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Internal server error' });
 });
 
+// GET /primes/:n endpoint - returns all prime numbers <= n
+app.get('/primes/:n', (req, res) => {
+  const n = parseInt(req.params.n, 10);
+
+  if (isNaN(n) || n < 2) {
+    return res.status(400).json({ error: 'Invalid number provided. Must be an integer >= 2.' });
+  }
+
+  // Helper function to check if a number is prime
+  const isPrime = (num) => {
+    if (num < 2) return false;
+    for (let i = 2; i <= Math.sqrt(num); i++) {
+      if (num % i === 0) return false;
+    }
+    return true;
+  };
+
+  // Generate list of primes <= n
+  const primes = [];
+  for (let i = 2; i <= n; i++) {
+    if (isPrime(i)) primes.push(i);
+  }
+
+  res.json({
+    limit: n,
+    primes: primes,
+    count: primes.length
+  });
+});
+
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
@@ -90,3 +121,4 @@ app.listen(PORT, () => {
 
 // Export for testing purposes
 module.exports = app;
+
