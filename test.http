@@ -1,7 +1,99 @@
-POST http://localhost:3001/login
+### 1. 사용자 로그인
+POST http://localhost:3000/login
 Content-Type: application/json
 
 {
-    "username": "admin' --",
-    "password": "1234"
+  "username": "user1",
+  "password": "password123"
+}
+
+### 2. 회원가입 후 자동 로그인
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "secure123"
+}
+
+### 3. 관리자 전용 페이지 접근
+POST https://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "adminpass"
+}
+###
+GET https://localhost:3000/admin
+Cookie: session=530893f81caf53a210c97e952a698aa2c708f1d77d9439f47f2cb72931da9ee3
+
+### 4. 비밀번호 변경
+### 1. 로그인 (세션 쿠키 받기)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "password": "newsecure456"
+}
+
+### 2. 비밀번호 변경
+POST http://localhost:3000/change-password
+Content-Type: application/json
+Cookie: session=e051325b7fb3e25eec9878eaad47f20e56def4326103398e39b68f90a8b2e5a3
+
+{
+  "oldPassword": "oldpassword123",
+  "newPassword": "newsecure456"
+}
+
+
+### 5. 세션 유지 ping
+### 1️⃣ 로그인 요청 (세션 쿠키 생성)
+POST https://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "testuser"
+}
+
+### 2️⃣ 세션 확인 요청 (/ping)
+GET https://localhost:3000/ping
+Cookie: session=82facd9bf9d75c8ed61418617d1a2d08a7d731aeb94d78a412d686100848a6bc
+
+### 6. 다중 로그인 차단 알림
+POST http://localhost:3000/notify-multi-login
+Content-Type: application/json
+
+{
+  "userId": "testuser"
+}
+
+### 7. 자동 로그아웃 설정
+POST http://localhost:3000/set-auto-logout
+Content-Type: application/json
+
+{
+  "timeoutMinutes": 15
+}
+
+### 8. 이메일 인증 완료 처리
+GET http://localhost:3000/verify-email?token=abc123
+
+### 9. 다단계 인증 성공 처리
+POST http://localhost:3000/verify-otp
+Content-Type: application/json
+
+{
+  "otp": "654321"
+}
+
+### 10. 로그인 유지하기 (Remember me)
+POST http://localhost:3000/remember-me
+Content-Type: application/json
+
+{
+  "rememberMe": true
 }
