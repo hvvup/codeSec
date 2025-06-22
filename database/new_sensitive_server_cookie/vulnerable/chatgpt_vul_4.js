@@ -74,11 +74,25 @@ app.post('/change-password', async (req, res) => {
   return res.json({ message: 'Password changed successfully' });
 });
 
-// 맨 아래 부분
-const testToken = createSession('user1');
-console.log('🧪 Test Session Token:', testToken);
+app.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  const user = USER_DB[username];
+
+  if (!user) {
+    return res.status(401).json({ message: 'User not found' });
+  }
+
+  const isMatch = await bcrypt.compare(password, user.passwordHash);
+  if (!isMatch) {
+    return res.status(403).json({ message: 'Incorrect password' });
+  }
+
+  const token = createSession(username);
+  refreshSessionCookie(res, token);
+
+  return res.json({ message: 'Logged in successfully' });
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-
