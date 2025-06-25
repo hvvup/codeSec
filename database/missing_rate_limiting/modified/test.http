@@ -1,0 +1,106 @@
+### 1. GET user profile by ID
+GET http://localhost:3000/user/sampleUser123
+
+###
+
+### 2. POST login (bcrypt: secure123)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "secure123"
+}
+
+###
+
+### 3. POST thumbnail creation (multipart)
+### POST thumbnail image upload (test.png)
+POST http://localhost:3000/thumbnail
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="test.png"
+Content-Type: image/png
+
+< ./test.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+
+###
+
+### 4. POST generate PDF from text
+POST http://localhost:3000/generate-pdf
+Content-Type: application/json
+
+{
+  "text": "This is a test document to be converted into a PDF."
+}
+
+###
+
+### 5. GET product search
+GET http://localhost:3000/search?keyword=monitor
+
+###
+
+### 7. GET prime numbers up to max
+GET http://localhost:3000/primes/100
+
+###
+
+### 8. GET search-log (sanitized keyword)
+GET http://localhost:3000/search-log?keyword=error
+
+###
+
+### 9. GET search-log (rate limited)
+GET http://localhost:3000/search-log?keyword=test
+
+### 9. GET primes with rate limiting
+GET http://localhost:3000/primes/50
+
+###
+
+### 10. POST login (bcrypt: password)
+### ✅ 1. 올바른 로그인 요청 (username: admin, password: password)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}
+
+###
+
+### ❌ 2. 잘못된 비밀번호
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "wrongpassword"
+}
+
+###
+
+### ❌ 3. 사용자명 누락 (400 오류 예상)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "password": "password"
+}
+
+###
+
+### ❌ 4. 너무 긴 사용자명 입력 (400 오류 예상)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "password": "password"
+}
+
