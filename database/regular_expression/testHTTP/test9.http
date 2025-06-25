@@ -1,0 +1,17 @@
+### ✅ 정상 요청
+POST http://localhost:3000/extractParam
+Content-Type: application/json
+
+{
+  "param": "token",
+  "url": "http://site.com/page?token=12345&id=9"
+}
+
+### 🔥 악의적 요청
+POST http://localhost:3000/extractParam
+Content-Type: application/json
+
+{
+  "param": ".*(a+)+",
+  "url": "http://site.com/page?*(a+)+=exploit"
+}

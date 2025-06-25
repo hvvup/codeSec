@@ -1,0 +1,17 @@
+### ✅ 정상 요청
+POST http://localhost:3000/filterDomain
+Content-Type: application/json
+
+{
+  "domain": "example.com",
+  "emails": ["alice@example.com", "bob@test.com"]
+}
+
+### 🔥 악의적 요청
+POST http://localhost:3000/filterDomain
+Content-Type: application/json
+
+{
+  "domain": ".*(a+)+",
+  "emails": ["attacker@.*(a+)+", "normal@domain.com"]
+}

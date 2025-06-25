@@ -1,0 +1,17 @@
+### ✅ 정상 요청
+POST http://localhost:3000/matchId
+Content-Type: application/json
+
+{
+  "text": "user action id=1234 session start",
+  "idPattern": "1234"
+}
+
+### 🔥 악의적 요청
+POST http://localhost:3000/matchId
+Content-Type: application/json
+
+{
+  "text": "id=aaaaaaaaaaa",
+  "idPattern": ".*(a+)+"
+}

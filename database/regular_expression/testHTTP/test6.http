@@ -1,0 +1,17 @@
+### ✅ 정상 요청
+POST http://localhost:3000/checkExtension
+Content-Type: application/json
+
+{
+  "filename": "report.pdf",
+  "extension": "pdf"
+}
+
+### 🔥 악의적 요청
+POST http://localhost:3000/checkExtension
+Content-Type: application/json
+
+{
+  "filename": "attack.a+a+a+a+a+",
+  "extension": "a+a+a+a+a+"
+}

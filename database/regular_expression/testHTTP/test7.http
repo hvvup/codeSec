@@ -1,0 +1,17 @@
+### ✅ 정상 요청
+POST http://localhost:3000/checkIdPrefix
+Content-Type: application/json
+
+{
+  "id": "admin123",
+  "prefix": "admin"
+}
+
+### 🔥 악의적 요청
+POST http://localhost:3000/checkIdPrefix
+Content-Type: application/json
+
+{
+  "id": "aaaaaaa",
+  "prefix": ".*(a+)+"
+}
