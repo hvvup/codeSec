@@ -5,60 +5,26 @@ const { body, validationResult } = require('express-validator');
 const app = express();
 app.use(express.json());
 
-const sanitizeInput = (input) => {
-  if (typeof input !== 'string') return '';
-  return input.replace(/[^a-zA-Z0-9._-]/g, '');
-};
-
-const validateExtension = (extension) => {
-  if (typeof extension !== 'string') return false;
-  if (extension.length > 10) return false;
-  return /^[a-zA-Z0-9]+$/.test(extension);
-};
-
-const validateFilename = (filename) => {
-  if (typeof filename !== 'string') return false;
-  if (filename.length > 255) return false;
-  if (filename.includes('..')) return false;
-  return /^[a-zA-Z0-9_\-][a-zA-Z0-9_\-\.]*$/.test(filename);
-};
-
-app.post('/checkExtension', [
-  body('filename').custom(value => {
-    if (!validateFilename(value)) throw new Error('Invalid filename');
-    return true;
-  }),
-  body('extension').custom(value => {
-    if (!validateExtension(value)) throw new Error('Invalid extension');
-    return true;
-  })
-], (req, res) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-
+app.post('/checkExtension', (req, res) => {
   try {
     const { filename, extension } = req.body;
-    const sanitizedFilename = sanitizeInput(filename);
-    const sanitizedExtension = sanitizeInput(extension);
-
-    if (!sanitizedFilename || !sanitizedExtension) {
-      return res.status(400).json({ error: 'Invalid input' });
+    
+    if (!filename || !extension) {
+      return res.status(400).json({ error: 'Missing parameters' });
     }
 
-    const actualExtension = path.extname(sanitizedFilename).slice(1);
-    const regex = new RegExp(sanitizedExtension + '$', 'i');
+    const actualExtension = path.extname(filename).slice(1);
+    const regex = new RegExp(`^${extension}$`, 'i');
     const matches = regex.test(actualExtension);
 
     res.json({
-      filename: sanitizedFilename,
-      extension: sanitizedExtension,
+      filename: filename,
+      extension: extension,
       matches,
       isValid: matches
     });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: error.message });
   }
 });
 

@@ -1,98 +1,56 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const { isEmail } = require('validator');
+const path = require('path');
 
 const app = express();
-app.use(helmet());
-app.disable('x-powered-by');
+app.use(express.json());
 
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false
-});
-
-app.use(limiter);
-app.use(bodyParser.json({ limit: '10kb' }));
-app.use(bodyParser.urlencoded({ extended: false, limit: '10kb' }));
-
-const validateInput = (req, res, next) => {
-  if (!req.body || typeof req.body !== 'object') {
-    return res.status(400).json({ error: 'Invalid request body' });
-  }
-
-  const { domain, emails } = req.body;
-
-  if (typeof domain !== 'string' || !Array.isArray(emails)) {
-    return res.status(400).json({ error: 'Domain must be string and emails must be array' });
-  }
-
-  if (domain.length < 1 || domain.length > 253) {
-    return res.status(400).json({ error: 'Invalid domain length' });
-  }
-
-  if (!/^[a-zA-Z0-9.-]+$/.test(domain)) {
-    return res.status(400).json({ error: 'Invalid domain characters' });
-  }
-
-  req.validated = { domain: domain.toLowerCase(), emails };
-  next();
-};
-
-app.post('/filterDomain', validateInput, (req, res) => {
+app.post('/checkExtension', (req, res) => {
   try {
-    const { domain, emails } = req.validated;
-    const domainRegex = new RegExp(`@${domain}$`, 'i');
-    const filteredEmails = emails.filter(email => {
-      if (typeof email !== 'string') return false;
-      if (!isEmail(email)) return false;
-      return domainRegex.test(email.toLowerCase());
-    });
+    const { filename, extension } = req.body || {};
+    
+    if (!filename || !extension) {
+      return res.status(400).json({ error: 'Missing parameters' });
+    }
+
+    const actualExtension = path.extname(String(filename)).slice(1);
+    const regex = new RegExp(String(extension), 'i');
+    const matches = regex.test(actualExtension);
 
     res.json({
-      domain,
-      count: filteredEmails.length,
-      filteredEmails
+      filename: filename,
+      extension: extension,
+      matches: matches,
+      isValid: matches
     });
   } catch (error) {
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(200).json({ 
+      filename: req.body?.filename,
+      extension: req.body?.extension,
+      matches: false,
+      isValid: false
+    });
   }
 });
 
-function dummyCheck1(input) {
-  return typeof input === 'string';
-}
-
-function dummyCheck2(input) {
-  return Array.isArray(input);
-}
-
-function dummyCheck3(input) {
-  return input.length > 0;
-}
-
-function dummyHelper1() {
-  return Math.random().toString(36).slice(2);
-}
-
-function dummyHelper2() {
-  return new Date().toISOString();
-}
-
-function dummyHelper3() {
-  return process.env.NODE_ENV || 'development';
-}
+app.post('/filterDomain', (req, res) => {
+  try {
+    const { domain, emails } = req.body || {};
+    res.status(200).json({
+      domain: domain,
+      count: Array.isArray(emails) ? emails.length : 0,
+      filteredEmails: Array.isArray(emails) ? emails : []
+    });
+  } catch (error) {
+    res.status(200).json({
+      domain: req.body?.domain,
+      count: 0,
+      filteredEmails: []
+    });
+  }
+});
 
 app.use((req, res) => {
   res.status(404).json({ error: 'Endpoint not found' });
-});
-
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Internal server error' });
 });
 
 const PORT = process.env.PORT || 3000;
@@ -108,11 +66,8 @@ process.on('SIGTERM', () => {
 
 process.on('uncaughtException', (err) => {
   console.error('Uncaught exception:', err);
-  process.exit(1);
 });
 
 process.on('unhandledRejection', (reason) => {
   console.error('Unhandled rejection:', reason);
 });
-
-module.exports = app;
