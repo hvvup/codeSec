@@ -1,0 +1,89 @@
+### 1. Register new user (정상 등록)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "strongpassword123"
+}
+
+### 2. Register existing user again (중복 등록)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "anotherpassword"
+}
+
+### 3. Login with correct credentials (토큰 발급)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "strongpassword123"
+}
+
+### 4. Login with wrong password (인증 실패)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "wrongpassword"
+}
+
+### 5. Upload file (정상 토큰 필요)
+# Replace <PASTE_VALID_TOKEN_HERE> with actual token from step 3
+POST http://localhost:3000/upload
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA0OTU5MjYsImV4cCI6MTc1MDQ5OTUyNn0.WUf0NEi6t-uipAxBmdOusguu3y-9TD24uQEyWfCuBt4
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="example.txt"
+Content-Type: text/plain
+
+This is a secure test file.
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 6. Upload without token (비인가 업로드)
+POST http://localhost:3000/upload
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="unauthorized.txt"
+Content-Type: text/plain
+
+Should be blocked.
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 7. Upload with forged JWT (위조된 토큰)
+POST http://localhost:3000/upload
+Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA0OTI2ODZ9..signature_removed
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="file"; filename="forged.txt"
+Content-Type: text/plain
+
+Forged JWT token upload attempt.
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 8. List files (정상 토큰 필요)
+GET http://localhost:3000/files
+Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA0OTI2ODZ9.
+
+### 9. List files without token (비인가)
+GET http://localhost:3000/files
+
+### 10. Download specific file (정상 토큰 필요)
+# Replace example.txt with actual uploaded filename
+GET http://localhost:3000/files/example.txt
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA0NDAxNzgsImV4cCI6MTc1MDQ0Mzc3OH0.xRf673601-tobJuY4o5a-hjTuWshGk3k5cuEQQNXoSc
+
+### 11. Download without token (비인가 다운로드)
+GET http://localhost:3000/files/example.txt
+
+### 12. Download non-existent file (404 확인)
+GET http://localhost:3000/files/notfound.txt
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA0NDAxNzgsImV4cCI6MTc1MDQ0Mzc3OH0.xRf673601-tobJuY4o5a-hjTuWshGk3k5cuEQQNXoSc

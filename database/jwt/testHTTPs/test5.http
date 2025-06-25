@@ -1,0 +1,79 @@
+### 1. Register new user (✅ 정상 회원가입)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "SecurePass123!"
+}
+
+### 2. Try duplicate registration (❌ 중복 가입)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "AnotherPassword"
+}
+
+### 3. Register with missing password (❌ 필수값 누락)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "someone@example.com"
+}
+
+### 4. Verify user using extracted token (✅ 이메일 인증)
+# ⚠️ Step 1에서 콘솔에 출력된 링크를 보고 아래 주소를 복사/붙여넣기
+# 예: GET http://localhost:3000/verify?token=abcd1234&email=user@example.com
+
+# 예시 (직접 수정 필요):
+GET http://localhost:3000/verify?token=7b4a0ad2f4f91be341c04a2ceafbbbef40661cb43d00e16b2d7554a358c6ef00&email=user@example.com
+
+### 5. Try verify again with same token (❌ 중복 인증 시도)
+# 동일한 링크를 다시 호출하면 실패해야 함
+GET http://localhost:3000/verify?token=7b4a0ad2f4f91be341c04a2ceafbbbef40661cb43d00e16b2d7554a358c6ef00&email=user@example.com
+
+### 6. Try verify with forged token (❌ 위조된 인증 시도)
+GET http://localhost:3000/verify?token=fake-token-1234&email=user@example.com
+
+### 7. Login before verifying (❌ 인증되지 않은 계정 로그인 시도)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "someone@example.com",
+  "password": "anyPassword"
+}
+
+### 8. Login with correct credentials (✅ 로그인 후 JWT 발급)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "SecurePass123!"
+}
+
+### 9. Login with wrong password (❌ 비밀번호 오류)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "WrongPass"
+}
+
+### 10. Access protected route with valid token (✅ 보호된 리소스 접근)
+# Replace <VALID_JWT> with actual token from step 8
+GET http://localhost:3000/private
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA0NDA4OTgsImV4cCI6MTc1MDQ0NDQ5OH0.1S1i0uUmeC-1SWjbtGQkIQYkzrasFmfst07Q0ibXEq8
+
+### 11. Access protected route without token (❌ 인증 없이 접근)
+GET http://localhost:3000/private
+
+### 12. Access protected route with forged token (❌ 위조된 토큰 사용)
+GET http://localhost:3000/private
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImhhY2tlckBleGFtcGxlLmNvbSIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoyNzAwMDAwMDAwfQ.signature_removed
+

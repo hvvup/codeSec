@@ -1,0 +1,70 @@
+### ✅ [정상] 사용자 등록
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "secure1234"
+}
+
+### ❌ [중복 사용자 등록]
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "anotherpass"
+}
+
+### ❌ [잘못된 요청] 비밀번호 누락
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "missingpass@example.com"
+}
+
+### ✅ [정상] 로그인
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "secure1234"
+}
+
+### ❌ [실패] 존재하지 않는 이메일로 로그인
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "nonexistent@example.com",
+  "password": "doesntmatter"
+}
+
+### ❌ [실패] 잘못된 비밀번호로 로그인
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "wrongpassword"
+}
+
+### ✅ [정상] 토큰으로 /profile 접근
+# ⚠️ 아래 토큰은 로그인 결과에서 실제로 받은 토큰으로 바꿔주세요
+GET http://localhost:3000/profile
+Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA0OTAyNDB9.
+
+### ❌ [실패] 토큰 없이 /profile 접근
+GET http://localhost:3000/profile
+
+### ❌ [실패] 잘못된 포맷 토큰
+GET http://localhost:3000/profile
+Authorization: Bearer abc.def.ghi
+
+### 🚨 [악의적] none 알고리즘 사용한 위조 토큰 (취약하지 않음)
+# ⚠️ 실제 서버는 secret 키를 사용하는 방식이므로 아래 요청은 차단됨이 정상입니다.
+GET http://localhost:3000/profile
+Authorization: Bearer eyJhbGciOiJub25lIn0.eyJlbWFpbCI6ImF0dGFja2VyQGV4YW1wbGUuY29tIn0.
+

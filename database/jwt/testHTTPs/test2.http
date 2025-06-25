@@ -1,0 +1,92 @@
+### 1. Register a new user (normal case)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "strongpassword123"
+}
+
+### 2. Register with missing fields (bad request)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "hacker@example.com"
+}
+
+### 3. Register an existing user (conflict)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "anotherpass"
+}
+
+### 4. Login with correct credentials
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "strongpassword123"
+}
+
+### 5. Login with wrong password
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "wrongpass"
+}
+
+### 6. Login with non-existent user
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "unknown@example.com",
+  "password": "whatever"
+}
+
+### 7. Create post (valid token required)
+# Replace <PASTE_VALID_TOKEN_HERE> with actual token from step 4
+POST http://localhost:3000/posts
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA0OTA3ODV9.
+
+{
+  "title": "First Post",
+  "content": "This is a secure post."
+}
+
+### 8. Create post without token (unauthorized)
+POST http://localhost:3000/posts
+Content-Type: application/json
+
+{
+  "title": "Oops",
+  "content": "No token provided."
+}
+
+### 9. 취약점
+POST http://localhost:3000/posts
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJlbWFpbCI6ImhhY2tlckBldmlsLmNvbSIsImlhdCI6MTcxODc0NzAwMH0.
+
+{
+  "title": "Fake Post",
+  "content": "Trying to forge JWT!"
+}
+
+
+### 10. List all posts (public)
+GET http://localhost:3000/posts
+
+### 11. View a single post (public)
+GET http://localhost:3000/posts/1
+
+### 12. View non-existent post (404)
+GET http://localhost:3000/posts/999

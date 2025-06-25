@@ -1,0 +1,91 @@
+### 1. Register a new user (✅ 정상 등록)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+
+### 2. Register with the same email again (❌ 중복 사용자 등록)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "anotherPassword"
+}
+
+### 3. Register with missing fields (❌ 입력값 부족)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com"
+}
+
+### 4. Login with correct credentials (✅ 정상 로그인 - 토큰 필요)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "securePassword123"
+}
+
+### 5. Login with wrong password (❌ 비밀번호 틀림)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "wrongPassword"
+}
+
+### 6. Login with non-existent user (❌ 존재하지 않는 사용자)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "email": "noone@example.com",
+  "password": "anything"
+}
+
+### 7. Send chat message with valid token (✅ 인증된 메시지 전송)
+# Replace <VALID_TOKEN> with token from step 4
+POST http://localhost:3000/chat
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA0NDAzODksImV4cCI6MTc1MDQ0Mzk4OX0.nT4N4JYaz4dsKZhNxINNcAXMl0TKpKGvsNAgKqxt_hE
+Content-Type: application/json
+
+{
+  "content": "Hello, this is a secure message!"
+}
+
+### 8. Send chat message without token (❌ 인증 없이 메시지 전송)
+POST http://localhost:3000/chat
+Content-Type: application/json
+
+{
+  "content": "This should not be accepted"
+}
+
+### 9. Send chat message with forged JWT (❌ 위조 토큰 사용)
+POST http://localhost:3000/chat
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6Imh1Y2tlckBleGFtcGxlLmNvbSIsImlhdCI6MTYwMDAwMDAwMCwiZXhwIjoyNjAwMDAwMDAwfQ.signature_removed
+Content-Type: application/json
+
+{
+  "content": "This is a forged token message"
+}
+
+### 10. Get chat history with valid token (✅ 인증된 사용자만 가능)
+# Replace <VALID_TOKEN> with token from step 4
+GET http://localhost:3000/chat
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NTA0NDAzODksImV4cCI6MTc1MDQ0Mzk4OX0.nT4N4JYaz4dsKZhNxINNcAXMl0TKpKGvsNAgKqxt_hE
+
+### 11. Get chat history without token (❌ 인증 없이 접근)
+GET http://localhost:3000/chat
+
+### 12. Get chat history with expired or invalid token (❌ 유효하지 않은 토큰)
+GET http://localhost:3000/chat
+Authorization: Bearer invalid.jwt.token
