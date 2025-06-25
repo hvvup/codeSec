@@ -97,3 +97,191 @@ Content-Type: application/json
 {
   "rememberMe": true
 }
+
+
+###vul1
+### 🧪 로그인 성공 (정상 유저 정보)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "password": "password123"
+}
+
+### 🧪 로그인 실패 (비밀번호 틀림)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "password": "wrongpassword"
+}
+
+### 🧪 로그인 실패 (유저 존재하지 않음)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "notexist",
+  "password": "abc"
+}
+
+### 🧪 로그인 실패 (입력 유효성 실패)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "",
+  "password": "   "
+}
+
+
+###vul2
+### ✅ 회원가입 요청 (정상)
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "username": "alice",
+  "email": "alice@example.com",
+  "password": "alicepassword"
+}
+
+### 🔁 중복 아이디로 재가입 시도
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "username": "alice",
+  "email": "alice2@example.com",
+  "password": "anotherpassword"
+}
+
+### ❌ 잘못된 이메일 형식
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "username": "bob",
+  "email": "invalid-email",
+  "password": "bobpassword"
+}
+
+### ❌ 빈 문자열 입력
+POST http://localhost:3000/register
+Content-Type: application/json
+
+{
+  "username": "   ",
+  "email": "bob@example.com",
+  "password": "bobpassword"
+}
+
+###vul3
+### 🔍 1. 취약 세션 쿠키 존재 여부 확인 (회원가입 시 자동 로그인 쿠키)
+POST https://localhost:3000/register
+Content-Type: application/json
+
+{
+  "username": "vulnuser",
+  "email": "vuln@example.com",
+  "password": "vulnpass"
+}
+
+### 🔍 2. 취약 세션 쿠키 존재 여부 확인 (로그인 시 쿠키)
+POST https://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "vulnuser",
+  "password": "vulnpass"
+}
+
+### 🔍 3. 취약 쿠키 수동 포함 후 XSS 시나리오 테스트 (클라이언트 접근 가능 여부)
+GET http://localhost:3000/ping
+Cookie: session=REPLACE_WITH_SESSION_TOKEN
+
+### 🔍 4. XSS로 세션 쿠키 탈취 가능성 시뮬레이션 (브라우저 콘솔)
+# 로그인 후 개발자 도구 > Application > Cookies > session 쿠키 확인
+# 콘솔에서 아래 입력
+document.cookie.includes("session=")   // true면 HttpOnly가 누락되어 있음
+
+###vul5
+### ✅ 1. 로그인 요청 → session 쿠키 발급 (HttpOnly 미설정 검증 대상)
+POST https://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "alice"
+}
+
+### ✅ 2. 로그인 후 /ping 요청으로 세션 유지 확인
+GET https://localhost:3000/ping
+Cookie: session=2818577fe03ceb67678f61ae6536dab0d5c57ed7a260dc34bff3001621f55d74
+### ❌ 3. 세션 없이 /ping 요청 (Unauthorized)
+GET https://localhost:3000/ping
+
+### 🧪 4. 취약점 검증 (Set-Cookie 헤더 직접 확인)
+# 위 1번 요청에 대한 응답 헤더 예시:
+# Set-Cookie: session=abc123...; Secure; SameSite=Strict
+# → ❗ HttpOnly 없음 = CWE-1004 발생
+
+### 🧪 5. 클라이언트에서 document.cookie 접근 (브라우저 콘솔)
+# 로그인 후 브라우저 개발자도구 → 콘솔에 아래 입력
+document.cookie.includes("session=")  // true면 HttpOnly 누락됨 → 취약
+
+###vul4
+### ✅ 1. 로그인 성공 → 세션 쿠키 발급
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "password": "oldpassword123"
+}
+
+### ❌ 2. 로그인 실패 (잘못된 비밀번호)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "password": "wrongpassword"
+}
+
+### ❌ 3. 로그인 실패 (없는 사용자)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "nouser",
+  "password": "anypass"
+}
+
+### ✅ 4. 세션 쿠키 포함하여 비밀번호 변경 요청
+# 'session=' 값은 1번 요청 후 응답의 Set-Cookie 헤더에서 추출해 넣으세요
+POST http://localhost:3000/change-password
+Content-Type: application/json
+Cookie: session=REPLACE_WITH_SESSION_TOKEN
+
+{
+  "oldPassword": "oldpassword123",
+  "newPassword": "newsecure456"
+}
+
+### ❌ 5. 세션 없이 비밀번호 변경 요청 (Unauthorized)
+POST http://localhost:3000/change-password
+Content-Type: application/json
+
+{
+  "oldPassword": "oldpassword123",
+  "newPassword": "newsecure456"
+}
+
+### 🧪 6. 응답 헤더에서 Set-Cookie 확인
+# 1번 로그인 요청의 응답 헤더를 확인:
+# 예시:
+# Set-Cookie: session=abc123...; Secure; SameSite=Strict
+# ❗ HttpOnly가 **없으면** → CWE-1004 발생
+
