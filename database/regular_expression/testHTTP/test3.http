@@ -1,0 +1,17 @@
+### ✅ 정상 요청
+POST http://localhost:3000/parse
+Content-Type: application/json
+
+{
+  "key": "foo",
+  "input": "foo=123 bar=456"
+}
+
+### 🔥 악의적 요청
+POST http://localhost:3000/parse
+Content-Type: application/json
+
+{
+  "key": "(a+)+",
+  "input": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa=value"
+}

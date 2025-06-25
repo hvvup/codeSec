@@ -1,0 +1,24 @@
+### ✅ 정상 요청
+POST http://localhost:3000/filterAction
+Content-Type: application/json
+
+{
+  "action": "LOGIN",
+  "logs": [
+    "LOGIN SUCCESS",
+    "LOGOUT",
+    "LOGIN FAILED"
+  ]
+}
+
+### 🔥 악의적 요청
+POST http://localhost:3000/filterAction
+Content-Type: application/json
+
+{
+  "action": ".*(a+)+",
+  "logs": [
+    "aaaaaa",
+    "attack pattern"
+  ]
+}

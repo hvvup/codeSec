@@ -1,0 +1,17 @@
+### ✅ 정상 요청
+POST http://localhost:3000/stripTag
+Content-Type: application/json
+
+{
+  "tag": "b",
+  "text": "<b>bold</b> text"
+}
+
+### 🔥 악의적 요청
+POST http://localhost:3000/stripTag
+Content-Type: application/json
+
+{
+  "tag": ".*(a+)+",
+  "text": "<.*(a+)+>attack</.*(a+)+>"
+}

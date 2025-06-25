@@ -1,0 +1,17 @@
+### ✅ 정상 요청
+POST http://localhost:3000/searchLogin
+Content-Type: application/json
+
+{
+  "userId": "alice",
+  "logText": "userId=alice logged in"
+}
+
+### 🔥 악의적 요청
+POST http://localhost:3000/searchLogin
+Content-Type: application/json
+
+{
+  "userId": ".*(a+)+",
+  "logText": "userId=aaaaaa"
+}

@@ -1,0 +1,17 @@
+### ✅ 정상 요청
+POST http://localhost:3000/highlight
+Content-Type: application/json
+
+{
+  "text": "The quick brown fox",
+  "query": "quick"
+}
+
+### 🔥 악의적 요청
+POST http://localhost:3000/highlight
+Content-Type: application/json
+
+{
+  "text": "aaaaaa",
+  "query": ".*(a+)+"
+}
