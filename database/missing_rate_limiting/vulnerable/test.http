@@ -1,0 +1,10 @@
+###vul6
+### Send test email (using Ethereal)
+POST http://localhost:3000/send-email
+Content-Type: application/json
+
+{
+  "to": "test@example.com",
+  "subject": "Ethereal Test",
+  "message": "This is a test email using Ethereal fake SMTP server."
+}
