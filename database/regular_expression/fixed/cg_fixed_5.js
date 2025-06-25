@@ -18,7 +18,6 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// 🔐 Escape user-supplied string to make it safe for RegExp
 function escapeRegex(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

@@ -17,7 +17,6 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// ✅ Escapes regex metacharacters to prevent injection
 function escapeRegex(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

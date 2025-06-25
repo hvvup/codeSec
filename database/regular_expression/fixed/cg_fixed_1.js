@@ -21,12 +21,10 @@ function isValidLogText(text) {
     return typeof text === 'string' && text.length > 0 && text.length <= 10000;
 }
 
-// 🔐 Escape function for regex injection prevention
 function escapeRegex(text) {
     return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// 🔐 FIXED: Sanitized regex construction
 function safeExtractUserIdEntries(userId, logText) {
     const safeUserId = escapeRegex(userId);
     const pattern = new RegExp(`userId=${safeUserId}\\b`, 'g');
