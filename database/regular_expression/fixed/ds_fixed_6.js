@@ -48,7 +48,6 @@ app.post('/checkExtension', [
     }
 
     const actualExtension = path.extname(sanitizedFilename).slice(1);
-    // Replaced vulnerable regex construction with safe string comparison
     const matches = actualExtension.toLowerCase() === sanitizedExtension.toLowerCase();
 
     res.json({

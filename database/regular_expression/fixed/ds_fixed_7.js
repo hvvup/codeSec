@@ -33,7 +33,6 @@ const validateInput = (req, res, next) => {
     return res.status(400).json({ error: 'Neither id nor prefix can be empty' });
   }
 
-  // Add maximum length checks
   if (id.length > 1000 || prefix.length > 100) {
     return res.status(400).json({ error: 'Input too long' });
   }
@@ -45,7 +44,6 @@ const validateInput = (req, res, next) => {
 app.post('/checkIdPrefix', validateInput, (req, res) => {
   try {
     const { id, prefix } = req.validated;
-    // Replace vulnerable regex with safe string operation
     const startsWithPrefix = id.startsWith(prefix);
     
     res.json({
