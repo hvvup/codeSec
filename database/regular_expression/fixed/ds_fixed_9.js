@@ -37,7 +37,6 @@ const validateInput = (req, res, next) => {
     return res.status(400).json({ error: 'Invalid parameter name' });
   }
 
-  // Add URL length limit
   if (url.length > 2048) {
     return res.status(400).json({ error: 'URL too long' });
   }

@@ -43,9 +43,7 @@ const validateInput = (req, res, next) => {
 };
 
 const safePatternMatcher = (text, idPattern) => {
-  // Escape any special regex characters in the idPattern
   const escapedPattern = idPattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  // Create a safe regex with fixed boundaries
   const regex = new RegExp(`id=${escapedPattern}(?:\\b|$)`, 'i');
   return regex.test(text);
 };

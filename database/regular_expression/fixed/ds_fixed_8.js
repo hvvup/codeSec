@@ -38,7 +38,6 @@ const validateInput = (req, res, next) => {
     return res.status(400).json({ error: 'Invalid domain characters' });
   }
 
-  // Add email array length limit
   if (emails.length > 1000) {
     return res.status(400).json({ error: 'Too many emails to process' });
   }
@@ -55,7 +54,6 @@ app.post('/filterDomain', validateInput, (req, res) => {
     const filteredEmails = emails.filter(email => {
       if (typeof email !== 'string') return false;
       if (!isEmail(email)) return false;
-      // Replace vulnerable regex with safe string operation
       return email.toLowerCase().endsWith(domainSuffix);
     });
 
