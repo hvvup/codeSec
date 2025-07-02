@@ -1,55 +1,37 @@
-###6
-### Update user info
-PUT http://localhost:3000/api/user/update
+### 1. 정상 요청 예시
+GET http://localhost:3000/api/search/Electronics
+
+### 유효하지 않은 입력 (숫자 포함)
+GET http://localhost:3000/api/search/1234
+
+### 공백 포함 카테고리 예시
+GET http://localhost:3000/api/search/Home%20Appliances
+
+### 2
+POST http://localhost:3000/api/user
 Content-Type: application/json
 
 {
-  "email": "testuser@example.com",
-  "name": "John Doe",
-  "age": 30
+  "userId": "abc123"
 }
 
-###7
-### Delete a product by ID
-DELETE http://localhost:3000/api/product/delete
+###3
+GET http://localhost:3000/api/posts/search?keyword=example
+Accept: application/json
+
+###4
+POST http://localhost:3000/api/login
 Content-Type: application/json
 
 {
-  "productId": 1
+  "username": "alice",
+  "password": "mypassword123"
 }
 
-
-###8
-### Get all users (Admin only)
-GET http://localhost:3000/api/admin/users
-Authorization: Bearer admin123
-
-###9
-### Report a comment by ID
-POST http://localhost:3000/api/comments/report
+###5
+DELETE http://localhost:3000/api/todo/delete
 Content-Type: application/json
 
 {
-  "commentId": "64fd14b2ecf485f5d8d56789"
+  "_id": 2
 }
-###
-POST http://localhost:3000/api/comments/report
-Content-Type: application/json
-
-{
-  "commentId": 1
-}
-
-###
-POST http://localhost:3000/api/comments/report
-Content-Type: application/json
-
-{
-  "commentId": 2
-}
-
-
-
-###10
-### Get blog posts by author name
-GET http://localhost:3000/api/posts/author/Alice
