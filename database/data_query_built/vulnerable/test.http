@@ -1,0 +1,48 @@
+###6
+### Update user info
+PUT http://localhost:3000/api/user/update
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "name": "John Doe",
+  "age": 30
+}
+
+###7
+### Delete a product by ID
+
+
+DELETE http://localhost:3000/api/product/delete
+Content-Type: application/json
+
+{
+  "productId": "1 OR 1=1;--"
+}
+
+###8
+### Get all users (Admin only)
+GET http://localhost:3000/api/admin/users
+Authorization: Bearer admin123
+
+###9
+### Report a comment by ID
+POST http://localhost:3000/api/comments/report
+Content-Type: application/json
+
+{
+  "commentId": 1
+}
+
+###공격
+POST http://localhost:3000/api/comments/report
+Content-Type: application/json
+
+{
+  "commentId": "1; DROP TABLE comments; --"
+}
+
+
+###10
+### Get blog posts by author name
+GET http://localhost:3000/api/posts/author/Alice
