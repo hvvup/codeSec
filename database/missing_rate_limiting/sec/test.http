@@ -35,3 +35,176 @@ GET http://localhost:3000/search-log?keyword=test
 GET http://localhost:3000/search-log?keyword[]=array
 ### 8. Valid Search with Spaces (200 OK)
 GET http://localhost:3000/search-log?keyword=server%20error
+
+###sec9
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### 1. Health Check
+GET {{baseUrl}}/health
+
+### 2. Valid Text Summary (JSON response)
+POST {{baseUrl}}/summarize
+Content-Type: {{contentType}}
+Accept: {{contentType}}
+
+{
+  "text": "This is a sample text. It contains multiple sentences. The API should return the first few sentences. This is the fourth sentence. And here's a fifth one."
+}
+
+### 3. Valid Text Summary (Plain text response)
+POST {{baseUrl}}/summarize
+Content-Type: {{contentType}}
+Accept: text/plain
+
+{
+  "text": "Another example text. The API should return this as plain text. Not as JSON. This makes it easier for CLI tools."
+}
+
+### 4. Empty Text (400 Bad Request)
+POST {{baseUrl}}/summarize
+Content-Type: {{contentType}}
+
+{
+  "text": ""
+}
+
+### 5. Missing Text Field (400 Bad Request)
+POST {{baseUrl}}/summarize
+Content-Type: {{contentType}}
+
+{
+  "wrongField": "Some text"
+}
+
+### 6. Non-String Input (400 Bad Request)
+POST {{baseUrl}}/summarize
+Content-Type: {{contentType}}
+
+{
+  "text": 12345
+}
+
+### 7. Long Text (400 Bad Request - exceeds 5000 chars)
+POST {{baseUrl}}/summarize
+Content-Type: {{contentType}}
+
+{
+  "text": "Lorem ipsum dolor sit amet... [repeated to exceed 5000 characters]"
+}
+
+### 8. HTML/Script Input (Should be properly escaped)
+POST {{baseUrl}}/summarize
+Content-Type: {{contentType}}
+
+{
+  "text": "<script>alert('xss')</script> This is malicious. But it should be escaped."
+}
+
+### 9. Rate Limit Test (Run this 31 times)
+POST {{baseUrl}}/summarize
+Content-Type: {{contentType}}
+
+{
+  "text": "Testing rate limits. This request should count against the limit."
+}
+
+### 10. Large JSON Body (413 Payload Too Large)
+POST {{baseUrl}}/summarize
+Content-Type: {{contentType}}
+
+{
+  "text": "A very long string... [make this exceed 10kb]"
+}
+
+###sec10
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### 1. Successful Login (200 OK)
+POST {{baseUrl}}/login
+Content-Type: {{contentType}}
+
+{
+  "username": "secure_user",
+  "password": "correct_password"
+}
+
+### 2. Wrong Username (401 Unauthorized)
+POST {{baseUrl}}/login
+Content-Type: {{contentType}}
+
+{
+  "username": "wrong_user",
+  "password": "correct_password"
+}
+
+### 3. Wrong Password (401 Unauthorized)
+POST {{baseUrl}}/login
+Content-Type: {{contentType}}
+
+{
+  "username": "secure_user",
+  "password": "wrong_password"
+}
+
+### 4. Missing Username (400 Bad Request)
+POST {{baseUrl}}/login
+Content-Type: {{contentType}}
+
+{
+  "password": "correct_password"
+}
+
+### 5. Missing Password (400 Bad Request)
+POST {{baseUrl}}/login
+Content-Type: {{contentType}}
+
+{
+  "username": "secure_user"
+}
+
+### 6. Empty Fields (400 Bad Request)
+POST {{baseUrl}}/login
+Content-Type: {{contentType}}
+
+{
+  "username": "",
+  "password": ""
+}
+
+### 7. Non-String Input (400 Bad Request)
+POST {{baseUrl}}/login
+Content-Type: {{contentType}}
+
+{
+  "username": 123,
+  "password": 456
+}
+
+### 8. Rate Limit Test (429 Too Many Requests after 5 attempts)
+POST {{baseUrl}}/login
+Content-Type: {{contentType}}
+
+{
+  "username": "secure_user",
+  "password": "correct_password"
+}
+
+### 9. Large JSON Payload (413 Payload Too Large)
+POST {{baseUrl}}/login
+Content-Type: {{contentType}}
+
+{
+  "username": "a".repeat(10000),
+  "password": "a".repeat(10000)
+}
+
+### 10. SQL Injection Attempt (401 Unauthorized - treated as invalid login)
+POST {{baseUrl}}/login
+Content-Type: {{contentType}}
+
+{
+  "username": "admin' --",
+  "password": "anything"
+}

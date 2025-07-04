@@ -5,6 +5,9 @@ const validator = require('validator');
 const helmet = require('helmet');
 const sanitizeHtml = require('sanitize-html');
 
+require('dotenv').config();
+
+
 const app = express();
 
 // Security middleware
@@ -21,15 +24,25 @@ const emailLimiter = rateLimit({
 });
 
 // SMTP configuration (use environment variables in production)
+// const transporter = nodemailer.createTransport({
+//   host: process.env.SMTP_HOST || 'smtp.example.com',
+//   port: parseInt(process.env.SMTP_PORT || '587'),
+//   secure: false, // true for 465, false for other ports
+//   auth: {
+//     user: process.env.SMTP_USER || 'user@example.com',
+//     pass: process.env.SMTP_PASS || 'password',
+//   },
+// });
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.example.com',
+  host: process.env.SMTP_HOST,
   port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false, // true for 465, false for other ports
+  secure: false,
   auth: {
-    user: process.env.SMTP_USER || 'user@example.com',
-    pass: process.env.SMTP_PASS || 'password',
-  },
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
+  }
 });
+
 
 // Input validation middleware
 const validateEmailInput = (req, res, next) => {
