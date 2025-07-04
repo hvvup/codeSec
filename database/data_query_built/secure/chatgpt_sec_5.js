@@ -62,7 +62,7 @@ app.post('/api/login', async (req, res) => {
     }
 
     // Vulnerable query built by concatenating user input directly
-    const queryText = "SELECT * FROM userslogin WHERE username = '" + username + "'";
+    const queryText = "SELECT * FROM userslogin_5 WHERE username = '" + username + "'";
 
     const result = await pool.query(queryText);
 
