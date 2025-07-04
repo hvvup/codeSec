@@ -1,46 +1,52 @@
+
+
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const { body, validationResult } = require('express-validator');
+const PDFDocument = require('pdfkit');
+const helmet = require('helmet');
 const app = express();
-app.use(express.json());
 
-const loginAttempts = new Map();
-const MAX_ATTEMPTS = 5;
-const BLOCK_TIME = 5 * 60 * 1000;
+app.use(helmet());
+app.use(express.json({ limit: '10kb' }));
 
-app.use((req, res, next) => {
-  req.db = new sqlite3.Database('./login_secure_4.db');
-  next();
-});
-
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  const ip = req.ip;
-  const now = Date.now();
-  const record = loginAttempts.get(ip) || { count: 0, lastAttempt: 0, blockedUntil: 0 };
-
-  if (record.blockedUntil && now < record.blockedUntil) {
-    req.db.close();
-    return res.status(429).json({ error: "Too many login attempts. Try again later." });
-  }
-
-  const query = "SELECT * FROM users WHERE username = ? AND password = ?";
-  req.db.get(query, [username, password], (err, row) => {
-    req.db.close();
-    if (err) return res.status(500).json({ error: "DB error" });
-
-    if (row) {
-      loginAttempts.delete(ip);
-      res.json({ success: true });
-    } else {
-      record.count += 1;
-      record.lastAttempt = now;
-      if (record.count >= MAX_ATTEMPTS) {
-        record.blockedUntil = now + BLOCK_TIME;
-      }
-      loginAttempts.set(ip, record);
-      res.status(401).json({ success: false });
+app.post(
+  '/generate-pdf',
+  [
+    body('text')
+      .exists().withMessage('Text field is required.')
+      .isString().withMessage('Text must be a string.')
+      .isLength({ min: 1, max: 1000 }).withMessage('Text must be between 1 and 1000 characters.')
+      .trim()
+  ],
+  (req, res) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array().map(err => err.msg) });
     }
-  });
-});
 
-app.listen(3004);
+    const { text } = req.body;
+
+    try {
+      const doc = new PDFDocument();
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', 'inline; filename="generated.pdf"');
+
+      doc.pipe(res);
+      doc.fontSize(12).text(text, {
+        align: 'left',
+        lineGap: 4
+      });
+      doc.end();
+
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      res.status(500).json({ error: 'Failed to generate PDF.' });
+    }
+  }
+);
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Secure PDF generator server running on port ${PORT}`);
+});

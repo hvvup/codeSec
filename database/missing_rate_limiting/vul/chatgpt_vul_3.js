@@ -1,44 +1,61 @@
+
+
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const multer = require('multer');
+const sharp = require('sharp');
+const helmet = require('helmet');
+const path = require('path');
+
 const app = express();
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
-const db = new sqlite3.Database('./login_secure_3.db');
+app.use(helmet());
+app.disable('x-powered-by');
 
-const loginAttempts = new Map();
-const MAX_ATTEMPTS = 5;
-const BLOCK_TIME = 5 * 60 * 1000;
-
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  const ip = req.ip;
-  const now = Date.now();
-  const record = loginAttempts.get(ip) || { count: 0, lastAttempt: 0, blockedUntil: 0 };
-
-  if (record.blockedUntil && now < record.blockedUntil) {
-    return res.status(429).json({ error: "Too many login attempts. Try again later." });
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      return cb(new Error('Invalid file type. Only JPEG and PNG are allowed.'));
+    }
+    cb(null, true);
   }
+}).single('image');
 
-  const stmt = db.prepare("SELECT * FROM users WHERE username = ? AND password = ?");
-  stmt.get(username, password, (err, row) => {
-    if (err) {
-      return res.status(500).json({ error: "DB error" });
+app.post('/thumbnail', (req, res) => {
+  upload(req, res, async (err) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ error: 'File too large or invalid upload.' });
+    } else if (err) {
+      return res.status(400).json({ error: err.message });
     }
 
-    if (row) {
-      loginAttempts.delete(ip);
-      res.json({ success: true });
-    } else {
-      record.count += 1;
-      record.lastAttempt = now;
-      if (record.count >= MAX_ATTEMPTS) {
-        record.blockedUntil = now + BLOCK_TIME;
-      }
-      loginAttempts.set(ip, record);
-      res.status(401).json({ success: false });
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image file uploaded.' });
+    }
+
+    try {
+      const resizedImage = await sharp(req.file.buffer)
+        .resize(100, 100)
+        .toBuffer();
+
+      res.set('Content-Type', req.file.mimetype);
+      return res.send(resizedImage);
+    } catch (processingError) {
+      console.error('Image processing failed:', processingError);
+      return res.status(500).json({ error: 'Failed to process the image.' });
     }
   });
-  stmt.finalize();
 });
 
-app.listen(3003);
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error.' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Secure thumbnail service running on port ${PORT}`);
+});
