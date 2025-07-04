@@ -35,3 +35,18 @@ Content-Type: application/json
 {
   "_id": 2
 }
+
+### 🚨 로그인 SQL Injection 우회 시도
+POST http://localhost:3000/api/login
+Content-Type: application/json
+
+{ "username": "' OR '1'='1'--", "password": "1234" }
+
+### LOGIN TEST - VALID
+POST http://localhost:3000/api/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "1234"
+}
