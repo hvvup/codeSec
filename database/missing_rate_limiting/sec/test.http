@@ -1,3 +1,14 @@
+###sec6
+### Send test email
+POST http://localhost:3000/send-email
+Content-Type: application/json
+
+{
+  "to": "recipient@example.com",
+  "subject": "Test Email",
+  "message": "<p>Hello, this is a <b>test email</b> sent from REST client.</p>"
+}
+
 ###sec 7
 ### 1. Valid Request (200 OK)
 GET http://localhost:3000/primes/10
