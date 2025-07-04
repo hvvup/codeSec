@@ -1,0 +1,20 @@
+2023-10-15 08:30:45 [INFO] Server started on port 3000
+2023-10-15 08:32:10 [ERROR] Database connection failed - timeout after 5000ms
+2023-10-15 08:35:22 [WARNING] High memory usage detected: 85% of total
+2023-10-15 08:40:33 [INFO] User admin logged in from 192.168.1.100
+2023-10-15 08:42:18 [ERROR] Failed to load resource /api/users - 404 Not Found
+2023-10-15 08:45:05 [DEBUG] Cache cleared successfully
+2023-10-15 08:50:12 [INFO] New connection from 10.0.0.15
+2023-10-15 08:55:47 [ERROR] Authentication failed for user test@example.com
+2023-10-15 09:00:30 [WARNING] Disk space running low on /var/log
+2023-10-15 09:05:15 [INFO] Scheduled backup completed
+2023-10-15 09:10:20 [ERROR] Payment processing failed - invalid card
+2023-10-15 09:15:33 [DEBUG] Request processing time: 45ms
+2023-10-15 09:20:18 [INFO] Server health check passed
+2023-10-15 09:25:42 [ERROR] Email service unavailable - connection refused
+2023-10-15 09:30:55 [WARNING] Unusual activity detected from IP 203.0.113.42
+2023-10-15 09:35:10 [INFO] Maintenance mode activated
+2023-10-15 09:40:25 [ERROR] File upload failed - size exceeds limit
+2023-10-15 09:45:50 [DEBUG] Database query executed in 120ms
+2023-10-15 09:50:05 [INFO] 5 new users registered this hour
+2023-10-15 09:55:30 [ERROR] Internal server error - undefined is not a function

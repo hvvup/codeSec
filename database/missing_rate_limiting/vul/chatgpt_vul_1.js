@@ -1,53 +1,56 @@
+///////////////
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
+const path = require('path');
+const helmet = require('helmet');
+const xss = require('xss-clean');
+const { param, validationResult } = require('express-validator');
+
 const app = express();
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
-const db = new sqlite3.Database('./login_secure_1.db');
+app.use(helmet());
+app.use(xss());
+app.disable('x-powered-by');
 
-const loginAttempts = new Map();
-const MAX_ATTEMPTS = 5;
-const BLOCK_TIME = 5 * 60 * 1000;
+const validateId = [
+  param('id')
+    .trim()
+    .isAlphanumeric().withMessage('ID must be alphanumeric')
+    .isLength({ min: 1, max: 50 }).withMessage('ID length must be 1-50 characters'),
+];
 
-db.serialize(() => {
-  db.run("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT)");
-  db.run("INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)", ['admin', 'securepass']);
-});
-
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  const ip = req.ip;
-
-  const now = Date.now();
-  const record = loginAttempts.get(ip) || { count: 0, lastAttempt: 0, blockedUntil: 0 };
-
-  if (record.blockedUntil && now < record.blockedUntil) {
-    return res.status(429).json({ error: "Too many login attempts. Try again later." });
+app.get('/user/:id', validateId, (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: 'Invalid user ID', details: errors.array() });
   }
 
-  const query = "SELECT * FROM users WHERE username = ? AND password = ?";
-  db.get(query, [username, password], (err, row) => {
-    if (err) return res.status(500).json({ error: "DB error" });
+  const userId = req.params.id;
+  const safeFilename = path.basename(userId);
+  const filePath = path.join(__dirname, 'data', `${safeFilename}.json`);
 
-    if (row) {
-      loginAttempts.delete(ip);
-      return res.json({ success: true });
-    } else {
-      record.count += 1;
-      record.lastAttempt = now;
+  if (!filePath.startsWith(path.join(__dirname, 'data'))) {
+    return res.status(400).json({ error: 'Invalid file path' });
+  }
 
-      if (record.count >= MAX_ATTEMPTS) {
-        record.blockedUntil = now + BLOCK_TIME;
-        loginAttempts.set(ip, record);
-        return res.status(429).json({ error: "Too many failed attempts. Try again later." });
+  fs.readFile(filePath, 'utf8', (err, data) => {
+    if (err) {
+      if (err.code === 'ENOENT') {
+        return res.status(404).json({ error: 'User not found' });
       }
+      return res.status(500).json({ error: 'Internal server error' });
+    }
 
-      loginAttempts.set(ip, record);
-      return res.status(401).json({ success: false });
+    try {
+      const user = JSON.parse(data);
+      return res.status(200).json(user);
+    } catch (parseError) {
+      return res.status(500).json({ error: 'Invalid JSON format in user file' });
     }
   });
 });
 
-app.listen(3001, () => {
-  console.log("Server running on port 3001");
+app.listen(PORT, () => {
+  console.log(`Secure user API running at http://localhost:${PORT}`);
 });

@@ -1,45 +1,57 @@
+
+
+
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+const helmet = require('helmet');
+const { query, validationResult } = require('express-validator');
+
 const app = express();
-app.use(express.json());
+const PORT = process.env.PORT || 3000;
 
-const db = new sqlite3.Database('./login_secure_5.db');
+app.use(helmet());
+app.disable('x-powered-by');
+app.use(express.json({ limit: '10kb' }));
 
-const loginAttempts = new Map();
-const MAX_ATTEMPTS = 5;
-const BLOCK_TIME = 5 * 60 * 1000;
+const products = Array.from({ length: 1000 }, (_, i) => ({
+  id: i + 1,
+  name: `Product ${i + 1}`,
+  description: `Description for product ${i + 1}`
+}));
 
-function handleLogin(username, password, callback) {
-  const query = "SELECT * FROM users WHERE username = ? AND password = ?";
-  db.get(query, [username, password], callback);
-}
+const validateKeyword = [
+  query('keyword')
+    .exists().withMessage('keyword is required')
+    .isString().withMessage('keyword must be a string')
+    .isLength({ min: 1, max: 100 }).withMessage('keyword must be between 1 and 100 characters')
+    .matches(/^[a-zA-Z0-9\s\-]+$/).withMessage('keyword contains invalid characters'),
+];
 
-app.post('/login', (req, res) => {
-  const { username, password } = req.body;
-  const ip = req.ip;
-  const now = Date.now();
-  const record = loginAttempts.get(ip) || { count: 0, lastAttempt: 0, blockedUntil: 0 };
-
-  if (record.blockedUntil && now < record.blockedUntil) {
-    return res.status(429).json({ error: "Too many login attempts. Try again later." });
+app.get('/search', validateKeyword, (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
 
-  handleLogin(username, password, (err, row) => {
-    if (err) return res.status(500).json({ error: "DB error" });
+  const keyword = req.query.keyword.trim().toLowerCase();
 
-    if (row) {
-      loginAttempts.delete(ip);
-      res.json({ success: true });
-    } else {
-      record.count += 1;
-      record.lastAttempt = now;
-      if (record.count >= MAX_ATTEMPTS) {
-        record.blockedUntil = now + BLOCK_TIME;
-      }
-      loginAttempts.set(ip, record);
-      res.status(401).json({ success: false });
-    }
+  const results = products.filter(p =>
+    p.name.toLowerCase().includes(keyword) ||
+    p.description.toLowerCase().includes(keyword)
+  );
+
+  const topResults = results.slice(0, 10);
+
+  return res.json({
+    totalMatches: results.length,
+    results: topResults
   });
 });
 
-app.listen(3005);
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ error: 'Internal Server Error' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
