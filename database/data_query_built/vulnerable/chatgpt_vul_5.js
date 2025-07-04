@@ -65,7 +65,7 @@ app.post('/api/login', async (req, res) => {
     }
 
     // Vulnerable query using string interpolation
-    const queryText = "SELECT * FROM userslogin WHERE username = '" + username + "'";
+    const queryText = "SELECT * FROM userslogin_5 WHERE username = '" + username + "'";
 
     const result = await pool.query(queryText);
 
@@ -74,7 +74,7 @@ app.post('/api/login', async (req, res) => {
     }
 
     // Check if any user has matching password
-    const user = result.rows.find(u => password === u.plaintext_password);
+   const user = result.rows.find(u => password === u.plaintext_password);
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid username or password.' });
