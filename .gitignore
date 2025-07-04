@@ -1,2 +1,5 @@
 node_modules/*
 package-lock.json
+database/postMessage/post-db
+database/xss-through-dom/post-db
+database/js/log-injection/log-db

@@ -1,0 +1,1 @@
+[2025-06-12T01:45:18.336Z] abc [log injection]this function is injected

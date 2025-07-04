@@ -1,0 +1,4 @@
+secure/node_modules
+vulnerable/node_modules
+package-lock.json
+test.http
