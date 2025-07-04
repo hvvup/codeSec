@@ -1,0 +1,37 @@
+###sec 7
+### 1. Valid Request (200 OK)
+GET http://localhost:3000/primes/10
+### 2. Edge Case - Minimum Valid Input (200 OK)
+GET http://localhost:3000/primes/2
+### 3. Edge Case - Maximum Valid Input (200 OK)
+GET http://localhost:3000/primes/9999
+### 4. Invalid Input - Below Minimum (400 Bad Request)
+GET http://localhost:3000/primes/1
+### 5. Invalid Input - Above Maximum (400 Bad Request)
+GET http://localhost:3000/primes/10000
+### 6. Invalid Input - Non-integer (400 Bad Request)
+GET http://localhost:3000/primes/ten
+### 7. Invalid Input - Decimal Number (400 Bad Request)
+GET http://localhost:3000/primes/10.5
+### 8. Rate Limit Test (First 5: 200 OK, 6th: 429 Too Many Requests)
+GET http://localhost:3000/primes/10
+### 9. Invalid Endpoint (404 Not Found)
+GET http://localhost:3000/prime/10
+
+###sec8
+### 1. Valid Search (200 OK)
+GET http://localhost:3000/search-log?keyword=error
+### 2. Empty Keyword (400 Bad Request)
+GET http://localhost:3000/search-log?keyword=
+### 3. Missing Keyword (400 Bad Request)
+GET http://localhost:3000/search-log
+### 4. Long Keyword (400 Bad Request)
+GET http://localhost:3000/search-log?keyword=abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
+### 5. Special Characters (200 OK - should be properly escaped)
+GET http://localhost:3000/search-log?keyword=<script>alert('xss')</script>
+### 6. Rate Limit Test (Make 21 requests quickly)
+GET http://localhost:3000/search-log?keyword=test
+### 7. Non-String Keyword (400 Bad Request)
+GET http://localhost:3000/search-log?keyword[]=array
+### 8. Valid Search with Spaces (200 OK)
+GET http://localhost:3000/search-log?keyword=server%20error
