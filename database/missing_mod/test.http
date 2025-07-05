@@ -1,0 +1,150 @@
+###mod6
+### ✅ 정상 이메일 전송
+POST http://localhost:3000/send-email
+Content-Type: application/json
+
+{
+  "to": "recipient@example.com",
+  "subject": "Test Email",
+  "message": "Hello, this is a test email!"
+}
+
+### ❌ 유효하지 않은 이메일
+POST http://localhost:3000/send-email
+Content-Type: application/json
+
+{
+  "to": "invalid-email",
+  "subject": "Oops",
+  "message": "This should fail"
+}
+
+### ❌ 메시지 너무 짧음
+POST http://localhost:3000/send-email
+Content-Type: application/json
+
+{
+  "to": "recipient@example.com",
+  "subject": "Test",
+  "message": ""
+}
+
+### ❌ rate limit 초과
+# 위의 요청을 5회 이상 반복
+POST http://localhost:3000/send-email
+Content-Type: application/json
+
+{
+  "to": "recipient@example.com",
+  "subject": "Spam",
+  "message": "Trying to trigger rate limit"
+}
+
+### mod7
+### ✅ 정상 요청 (소수 1~10)
+GET http://localhost:3000/primes/10
+
+### ❌ 너무 큰 입력값 (Validation 실패)
+GET http://localhost:3000/primes/15000
+
+### ❌ 숫자가 아닌 입력값
+GET http://localhost:3000/primes/abc
+
+### ❌ rate limit 초과 테스트 (20번 이상 요청)
+# 아래 요청을 반복해서 21번 이상 전송하면 429 응답
+GET http://localhost:3000/primes/100
+
+###mod8
+### ✅ 로그 검색 (존재하는 키워드 "error" 검색)
+GET http://localhost:3000/search-log?keyword=error
+
+### ❌ 키워드 누락
+GET http://localhost:3000/search-log
+
+### ❌ 너무 긴 키워드
+GET http://localhost:3000/search-log?keyword=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+### ✅ 소수 요청 (10 이하의 소수)
+GET http://localhost:3000/primes/10
+
+### ❌ 잘못된 소수 요청 (n < 2)
+GET http://localhost:3000/primes/1
+
+### ❌ 소수 요청 – 비정상 입력 (문자)
+GET http://localhost:3000/primes/abc
+
+###mod9
+### ✅ 정상 요약 요청
+POST http://localhost:3000/summarize
+Content-Type: application/json
+Accept: application/json
+
+{
+  "text": "This is the first sentence. This is the second one! Here is the third? And another one follows. Yet another sentence."
+}
+
+### ❌ 유효성 검사 실패 (빈 문자열)
+POST http://localhost:3000/summarize
+Content-Type: application/json
+
+{
+  "text": ""
+}
+
+### ❌ 유효성 검사 실패 (숫자 입력)
+POST http://localhost:3000/summarize
+Content-Type: application/json
+
+{
+  "text": 123456
+}
+
+### ✅ 헬스 체크
+GET http://localhost:3000/health
+
+###mod10
+### ✅ 로그인 성공 (올바른 username + password)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "password"
+}
+
+
+### ❌ 로그인 실패 - 잘못된 비밀번호
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "wrongpass"
+}
+
+### ❌ 입력 누락 (비밀번호 없음)
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "admin"
+}
+
+### ❌ 형식 오류 - password 타입이 숫자
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": 1234
+}
+
+### ❌ rate limit 테스트 (5회 초과 시)
+# 위 요청을 반복적으로 6회 이상 보내면 429 응답
+POST http://localhost:3000/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "wrongpass"
+}
