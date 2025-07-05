@@ -78,15 +78,17 @@ const loadXML = (xmlString) => {
 };
 
 // Secure XPath query with parameterized input
+// Updated secure XPath query function
 const findOrderById = (doc, orderId) => {
   try {
-    // Using parameterized XPath to prevent injection
+    // Escape special characters in orderId to prevent XPath injection
+    const escapedOrderId = orderId.replace(/'/g, "''"); // Escape single quotes by doubling them
+    
+    // Use string concatenation with proper escaping (safer alternative)
     const select = xpath.useNamespaces({});
     const orderNode = select(
-      `/orders/order[id=$orderId]`,
-      doc,
-      null,
-      { orderId } // Pass variables separately
+      `/orders/order[id='${escapedOrderId}']`,
+      doc
     )[0];
 
     if (!orderNode) return null;

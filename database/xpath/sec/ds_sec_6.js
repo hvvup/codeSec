@@ -61,6 +61,12 @@ const isValidSender = (sender) => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sender);
 };
 
+// Escape special characters for XPath
+const escapeXPath = (str) => {
+  if (!str) return '';
+  return str.replace(/'/g, "\\'");
+};
+
 // GET endpoint to retrieve messages by sender
 app.get('/messages/from', (req, res) => {
   try {
@@ -78,24 +84,27 @@ app.get('/messages/from', (req, res) => {
       });
     }
 
-    // Safely construct XPath query with variable binding
+    // XPath 쿼리 생성 방식 변경
     const select = xpath.useNamespaces({});
-    const messages = select(
-      `//message[sender/text()=$sender]`,
-      xmlDoc,
-      false,
-      { sender: sender }
-    );
+    
+    // 모든 메시지 먼저 선택
+    const allMessages = select('//message', xmlDoc);
+    
+    // 필터링: sender가 일치하는 메시지만 선택
+    const filteredMessages = allMessages.filter(messageNode => {
+      const senderNode = select('string(sender/text())', messageNode);
+      return senderNode === sender;
+    });
 
-    if (!messages || messages.length === 0) {
+    if (!filteredMessages || filteredMessages.length === 0) {
       return res.status(404).json({
         message: 'No messages found for the specified sender',
         sender: sender
       });
     }
 
-    // Transform results to clean response format
-    const result = messages.map((messageNode) => {
+    // 결과 변환
+    const result = filteredMessages.map((messageNode) => {
       const content = select('string(content/text())', messageNode);
       const timestamp = select('string(timestamp/text())', messageNode);
       return {
@@ -114,7 +123,7 @@ app.get('/messages/from', (req, res) => {
     console.error('Error processing request:', error);
     res.status(500).json({
       error: 'Internal server error',
-      details: error.message
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
