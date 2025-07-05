@@ -78,12 +78,10 @@ app.get('/messages/from', (req, res) => {
       });
     }
 
-    // UNSAFE: XPath query constructed with string concatenation
+    // Vulnerable XPath query with direct string concatenation
     const select = xpath.useNamespaces({});
-    const messages = select(
-      `//message[sender/text()='${sender}']`,  // Vulnerable: direct string interpolation
-      xmlDoc
-    );
+    const xpathQuery = `//message[sender/text()='${sender}']`;
+    const messages = select(xpathQuery, xmlDoc);
 
     if (!messages || messages.length === 0) {
       return res.status(404).json({
@@ -92,7 +90,7 @@ app.get('/messages/from', (req, res) => {
       });
     }
 
-    // Transform results to clean response format
+    // Convert results
     const result = messages.map((messageNode) => {
       const content = select('string(content/text())', messageNode);
       const timestamp = select('string(timestamp/text())', messageNode);
@@ -112,7 +110,7 @@ app.get('/messages/from', (req, res) => {
     console.error('Error processing request:', error);
     res.status(500).json({
       error: 'Internal server error',
-      details: error.message
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
