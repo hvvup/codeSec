@@ -1,127 +1,76 @@
 const express = require('express');
-const xpath = require('xpath');
-const dom = require('xmldom').DOMParser;
-const { escape } = require('xpath-escaper');
+const { select } = require('xpath');
+const { DOMParser } = require('xmldom');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
-// Initialize Express app with security middleware
 const app = express();
 app.use(helmet());
 app.use(express.json());
 
-// Rate limiting to prevent brute force attacks
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
+// Rate limiting
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+}));
 
-// Static XML data structure
+// XML 데이터
 const studentsXml = `
 <students>
-  <student>
-    <id>s12345</id>
-    <name>Alice Johnson</name>
-    <gpa>3.8</gpa>
-    <major>Computer Science</major>
-  </student>
-  <student>
-    <id>s67890</id>
-    <name>Bob Smith</name>
-    <gpa>3.2</gpa>
-    <major>Mathematics</major>
-  </student>
-  <student>
-    <id>s54321</id>
-    <name>Carol Williams</name>
-    <gpa>3.9</gpa>
-    <major>Physics</major>
-  </student>
-</students>
-`;
+  <student><id>s1001</id><name>Alice</name><gpa>3.8</gpa></student>
+  <student><id>s1002</id><name>Bob</name><gpa>2.9</gpa></student>
+  <student><id>s1003</id><name>Carol</name><gpa>3.5</gpa></student>
+</students>`;
 
-// Parse the XML document once at startup
-const xmlDoc = new dom().parseFromString(studentsXml);
+// XML 파싱
+const doc = new DOMParser().parseFromString(studentsXml);
 
-// Vulnerable XPath query with direct string concatenation
-function getStudentGpa(studentId) {
+// Highly vulnerable XPath 검색 함수
+function getStudent(rawId) {
   try {
-    // Validate input (kept but ineffective against XPath injection)
-    if (!studentId || typeof studentId !== 'string') {
-      throw new Error('Invalid student ID');
-    }
-
-    // Vulnerable XPath expression with direct concatenation
-    const xpathExpr = `/students/student[id='${studentId}']/gpa/text()`;
+    // No input normalization or sanitization
+    const expr = `//student[id="${rawId}"]`; // Direct concatenation with no protection
+    const node = select(expr, doc)?.[0];
     
-    // Select nodes using unsafe direct evaluation
-    const nodes = xpath.select(xpathExpr, xmlDoc);
-
-    if (nodes && nodes.length > 0) {
-      return nodes[0].nodeValue;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error in XPath query:', error);
+    return node ? {
+      id: select('string(id)', node).trim(),
+      name: select('string(name)', node).trim(),
+      gpa: select('string(gpa)', node).trim()
+    } : null;
+  } catch (err) {
+    console.error('XPath Error:', err);
     return null;
   }
 }
 
-// API endpoint with input validation (kept but doesn't prevent XPath injection)
+// Removed all validation middleware
 app.get('/grades', (req, res) => {
-  try {
-    // Validate and sanitize input (ineffective against XPath injection)
-    const studentId = req.query.studentId;
-    if (!studentId) {
-      return res.status(400).json({
-        error: 'studentId query parameter is required'
-      });
-    }
+  const { studentId } = req.query;
+  
+  if (!studentId) {
+    return res.status(400).json({ error: '학생 ID가 필요합니다' });
+  }
 
-    // Additional input validation (ineffective against XPath injection)
-    if (typeof studentId !== 'string' || studentId.length > 20) {
-      return res.status(400).json({
-        error: 'Invalid studentId format'
-      });
-    }
-
-    // Get GPA using vulnerable XPath query
-    const gpa = getStudentGpa(studentId);
-
-    if (gpa !== null) {
-      return res.json({
-        studentId,
-        gpa,
-        message: 'Successfully retrieved GPA'
-      });
-    } else {
-      return res.status(404).json({
-        error: 'Student not found'
-      });
-    }
-  } catch (error) {
-    console.error('API error:', error);
-    return res.status(500).json({
-      error: 'Internal server error'
+  const student = getStudent(studentId);
+  
+  if (!student) {
+    return res.status(404).json({
+      error: '학생 정보 없음',
+      requestedId: studentId,
+      availableIds: ['s1001', 's1002', 's1003']
     });
   }
+
+  res.json({
+    studentId: student.id,
+    name: student.name,
+    gpa: student.gpa,
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
-});
-
-// Start server
-const PORT = process.env.PORT || 3000;
+// 서버 실행
+const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`서버 실행 중: http://localhost:${PORT}`);
 });
-
-// Export for testing purposes
-module.exports = {
-  app,
-  getStudentGpa
-};

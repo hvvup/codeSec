@@ -1,11 +1,8 @@
 const express = require('express');
-const { createServer } = require('http');
 const xpath = require('xpath');
 const { DOMParser } = require('xmldom');
-
-// Initialize Express application
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
 
 // Static XML inventory data
 const inventoryXML = `
@@ -29,7 +26,7 @@ const inventoryXML = `
         </product>
         <product>
             <code>PROD004</code>
-            <name>Basic Component</name>
+            <name>Basic Doohickey</name>
             <stock>0</stock>
         </product>
     </products>
@@ -37,76 +34,49 @@ const inventoryXML = `
 `;
 
 // Parse the XML document once at startup
-let xmlDoc;
-try {
-    xmlDoc = new DOMParser().parseFromString(inventoryXML);
-} catch (err) {
-    console.error('Failed to parse XML inventory:', err);
-    process.exit(1);
-}
+const xmlDoc = new DOMParser().parseFromString(inventoryXML);
 
-// Middleware to validate productCode parameter
-const validateProductCode = (req, res, next) => {
-    if (!req.query.productCode || typeof req.query.productCode !== 'string') {
-        return res.status(400).json({
-            error: 'Missing or invalid productCode parameter',
-            details: 'Please provide a valid product code in the query parameters'
-        });
-    }
-    
-    // Basic pattern validation for product codes
-    if (!/^[A-Z0-9]{3,10}$/.test(req.query.productCode)) {
-        return res.status(400).json({
-            error: 'Invalid product code format',
-            details: 'Product code must be 3-10 alphanumeric characters in uppercase'
-        });
-    }
-    
-    next();
-};
+// REMOVED input validation middleware completely
 
-// INSECURE XPath query function with direct string concatenation
-const queryStockLevel = (productCode) => {
+// Highly vulnerable XPath query with direct string concatenation
+const findProductByCode = (productCode) => {
     try {
-        // VULNERABLE: Direct string concatenation of user input into XPath
-        const xpathQuery = `/inventory/products/product[code='${productCode}']/stock/text()`;
+        // Extremely vulnerable: Direct string concatenation with no validation
+        const select = xpath.useNamespaces({});
+        const query = '//product[code="' + productCode + '"]/stock/text()';
+
+        // Execute the vulnerable query
+        const result = select(query, xmlDoc);
         
-        // Execute the XPath query
-        const result = xpath.select(xpathQuery, xmlDoc);
-        
-        if (result && result.length > 0) {
-            return result[0].nodeValue;
-        }
-        return null;
-    } catch (err) {
-        console.error('XPath query error:', err);
+        return result.length > 0 ? result[0].nodeValue : null;
+    } catch (error) {
+        console.error('XPath query error:', error);
         return null;
     }
 };
 
-// GET endpoint for stock lookup
-app.get('/stock', validateProductCode, (req, res) => {
-    const { productCode } = req.query;
+// GET endpoint for stock lookup - no validation middleware
+app.get('/stock', (req, res) => {
+    const productCode = req.query.productCode;
+    if (!productCode) {
+        return res.status(400).json({
+            error: 'productCode parameter is required'
+        });
+    }
     
-    // Log the request for auditing
-    console.log(`Stock lookup requested for product code: ${productCode}`);
+    const stockQuantity = findProductByCode(productCode);
     
-    // Perform the INSECURE XPath query
-    const stockLevel = queryStockLevel(productCode);
-    
-    if (stockLevel !== null) {
+    if (stockQuantity !== null) {
         res.json({
-            productCode,
-            stock: parseInt(stockLevel, 10),
-            status: 'success',
-            timestamp: new Date().toISOString()
+            productCode: productCode,
+            stock: parseInt(stockQuantity, 10),
+            status: 'success'
         });
     } else {
         res.status(404).json({
-            error: 'Product not found',
-            productCode,
+            productCode: productCode,
             status: 'not_found',
-            timestamp: new Date().toISOString()
+            message: 'Product not found in inventory'
         });
     }
 });
@@ -116,32 +86,17 @@ app.use((err, req, res, next) => {
     console.error('Application error:', err);
     res.status(500).json({
         error: 'Internal server error',
-        details: 'An unexpected error occurred'
+        details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
 });
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-    res.json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        service: 'Stock Lookup API',
-        version: '1.0.0'
-    });
-});
-
-// Create HTTP server
-const server = createServer(app);
 
 // Start the server
-server.listen(port, () => {
+app.listen(port, () => {
     console.log(`Stock lookup service running on port ${port}`);
-    console.log('Available product codes: PROD001, PROD002, PROD003, PROD004');
 });
 
-// Export for testing purposes
 module.exports = {
     app,
-    queryStockLevel,
+    findProductByCode,
     inventoryXML
 };

