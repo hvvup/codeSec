@@ -1,132 +1,95 @@
 const express = require('express');
-const xpath = require('xpath');
-const dom = require('xmldom').DOMParser;
-const { escape } = require('xpath-escaper');
+const { select } = require('xpath');
+const { DOMParser } = require('xmldom');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 
-// Initialize Express app with security middleware
 const app = express();
 app.use(helmet());
 app.use(express.json());
 
-// Rate limiting to prevent brute force attacks
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
+// Rate limiting
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+}));
 
-// Static XML data structure
+// XML 데이터 (공백 완전 제거 + 주의깊게 포맷팅)
 const studentsXml = `
 <students>
-  <student>
-    <id>s12345</id>
-    <name>Alice Johnson</name>
-    <gpa>3.8</gpa>
-    <major>Computer Science</major>
-  </student>
-  <student>
-    <id>s67890</id>
-    <name>Bob Smith</name>
-    <gpa>3.2</gpa>
-    <major>Mathematics</major>
-  </student>
-  <student>
-    <id>s54321</id>
-    <name>Carol Williams</name>
-    <gpa>3.9</gpa>
-    <major>Physics</major>
-  </student>
-</students>
-`;
+  <student><id>s1001</id><name>Alice</name><gpa>3.8</gpa></student>
+  <student><id>s1002</id><name>Bob</name><gpa>2.9</gpa></student>
+  <student><id>s1003</id><name>Carol</name><gpa>3.5</gpa></student>
+</students>`;
 
-// Parse the XML document once at startup
-const xmlDoc = new dom().parseFromString(studentsXml);
+// XML 파싱 (공백 보존)
+const doc = new DOMParser().parseFromString(studentsXml);
 
-// Secure XPath query with parameter binding
-function getStudentGpa(studentId) {
+// 강화된 XPath 검색 함수
+function getStudent(rawId) {
   try {
-    // Validate input
-    if (!studentId || typeof studentId !== 'string') {
-      throw new Error('Invalid student ID');
-    }
-
-    // Create a safe XPath expression with variable binding
-    const xpathExpr = '/students/student[id=$studentId]/gpa/text()';
+    // 1. 입력값 정규화 (모든 공백 제거 + 소문자화)
+    const normalizedId = rawId.replace(/\s/g, '').toLowerCase();
     
-    // Select nodes using safe parameter binding
-    const nodes = xpath.select(
-      xpathExpr,
-      xmlDoc,
-      null,
-      { studentId: escape(studentId) } // Properly escape the input
-    );
-
-    if (nodes && nodes.length > 0) {
-      return nodes[0].nodeValue;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error in XPath query:', error);
+    // 2. XML 내의 ID도 동일하게 정규화하여 비교
+    const expr = `//student[translate(id, " ", "")="${normalizedId}"]`;
+    const node = select(expr, doc)?.[0];
+    
+    return node ? {
+      id: select('string(id)', node).trim(),
+      name: select('string(name)', node).trim(),
+      gpa: select('string(gpa)', node).trim()
+    } : null;
+  } catch (err) {
+    console.error('XPath Error:', err);
     return null;
   }
 }
 
-// API endpoint with input validation
-app.get('/grades', (req, res) => {
-  try {
-    // Validate and sanitize input
-    const studentId = req.query.studentId;
-    if (!studentId) {
-      return res.status(400).json({
-        error: 'studentId query parameter is required'
-      });
-    }
+// 검증 미들웨어 (공백 허용 but 자동 제거)
+app.use('/grades', (req, res, next) => {
+  const { studentId } = req.query;
+  
+  if (!studentId) {
+    return res.status(400).json({ error: '학생 ID가 필요합니다' });
+  }
 
-    // Additional input validation
-    if (typeof studentId !== 'string' || studentId.length > 20) {
-      return res.status(400).json({
-        error: 'Invalid studentId format'
-      });
-    }
-
-    // Get GPA using secure XPath query
-    const gpa = getStudentGpa(studentId);
-
-    if (gpa !== null) {
-      return res.json({
-        studentId,
-        gpa,
-        message: 'Successfully retrieved GPA'
-      });
-    } else {
-      return res.status(404).json({
-        error: 'Student not found'
-      });
-    }
-  } catch (error) {
-    console.error('API error:', error);
-    return res.status(500).json({
-      error: 'Internal server error'
+  // 공백 포함 입력 허용 (앞뒤 공백 자동 제거)
+  const cleanedId = studentId.toString().trim();
+  
+  if (!/^s\d{4}$/i.test(cleanedId)) {
+    return res.status(400).json({ 
+      error: '유효하지 않은 ID 형식',
+      hint: 's + 4자리 숫자 (예: s1001)'
     });
   }
+
+  req.studentId = cleanedId;
+  next();
 });
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: 'Something went wrong!' });
+// API 엔드포인트
+app.get('/grades', (req, res) => {
+  const student = getStudent(req.studentId);
+  
+  if (!student) {
+    return res.status(404).json({
+      error: '학생 정보 없음',
+      requestedId: req.studentId,
+      availableIds: ['s1001', 's1002', 's1003']
+    });
+  }
+
+  res.json({
+    studentId: student.id,
+    name: student.name,
+    gpa: student.gpa,
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Start server
-const PORT = process.env.PORT || 3000;
+// 서버 실행
+const PORT = 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`서버 실행 중: http://localhost:${PORT}`);
 });
-
-// Export for testing purposes
-module.exports = {
-  app,
-  getStudentGpa
-};
