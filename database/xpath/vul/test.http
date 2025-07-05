@@ -1,0 +1,24 @@
+###1
+### 정상 입력
+GET http://localhost:3000/user/home?userName=alice
+
+### 정상 입력
+GET http://localhost:3000/user/home?userName=bob
+
+### XPath Injection 시도 (취약 확인용)
+GET http://localhost:3000/user/home?userName=alice' or '1'='1
+
+### 빈 userName (400 Bad Request)
+GET http://localhost:3000/user/home?userName=
+
+###2 (Xpath Injection Test)
+GET http://localhost:3000/posts/search?title=" or "1"="1 HTTP/1.1
+
+###3
+GET http://localhost:3000/verify/email?email=" or "1"="1 HTTP/1.1
+
+###4
+GET http://localhost:3000/book?isbn=" or "1"="1 HTTP/1.1
+
+###5
+GET http://localhost:3000/employee/salary?employeeId=" or "1"="1 HTTP/1.1

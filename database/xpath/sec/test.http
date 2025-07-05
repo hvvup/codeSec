@@ -1,0 +1,68 @@
+###1
+### GET 사용자 홈 디렉터리 (정상)
+GET http://localhost:3000/user/home?userName=alice
+Accept: application/json
+
+### GET 존재하지 않는 사용자
+GET http://localhost:3000/user/home?userName=charlie
+Accept: application/json
+
+### GET 빈 값 테스트
+GET http://localhost:3000/user/home?userName=
+Accept: application/json
+
+###2
+### ✅ 정상 검색: 존재하는 제목
+GET http://localhost:3000/posts/search?title=Node.js%20Tips
+Accept: application/json
+
+### ❌ 존재하지 않는 제목
+GET http://localhost:3000/posts/search?title=Unknown%20Post
+Accept: application/json
+
+### ❌ 빈 title 값 (400 Bad Request)
+GET http://localhost:3000/posts/search?title=
+Accept: application/json
+
+###3
+### 이메일이 존재하고 verified=true인 경우
+GET http://localhost:3000/verify/email?email=alice@example.com
+
+### 이메일이 존재하고 verified=false인 경우
+GET http://localhost:3000/verify/email?email=bob@example.com
+
+### 이메일이 존재하지 않는 경우
+GET http://localhost:3000/verify/email?email=notfound@example.com
+
+### 잘못된 요청 (빈 값)
+GET http://localhost:3000/verify/email?email=
+
+###4
+### 존재하는 책 검색
+GET http://localhost:3000/book?isbn=978-0132350884
+Accept: application/json
+
+### 존재하는 다른 책 검색
+GET http://localhost:3000/book?isbn=978-0201616224
+Accept: application/json
+
+### 없는 ISBN 검색 (404 예상)
+GET http://localhost:3000/book?isbn=000-0000000000
+Accept: application/json
+
+### 빈 isbn 파라미터 (400 예상)
+GET http://localhost:3000/book?isbn=
+Accept: application/json
+
+###5
+### 정상: employeeId=101
+GET http://localhost:3000/employee/salary?employeeId=101
+
+### 정상: employeeId=102
+GET http://localhost:3000/employee/salary?employeeId=102
+
+### 없는 직원: employeeId=999
+GET http://localhost:3000/employee/salary?employeeId=999
+
+### 빈 employeeId (400 Bad Request)
+GET http://localhost:3000/employee/salary?employeeId=
