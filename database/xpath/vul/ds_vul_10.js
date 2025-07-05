@@ -81,7 +81,7 @@ const loadXML = (xmlString) => {
 const findOrderById = (doc, orderId) => {
   try {
     const select = xpath.useNamespaces({});
-    // VULNERABILITY: Direct string concatenation of user input into XPath
+    // Vulnerable: Direct string concatenation of user input into XPath expression
     const orderNode = select(
       `/orders/order[id='${orderId}']`,
       doc
@@ -89,7 +89,7 @@ const findOrderById = (doc, orderId) => {
 
     if (!orderNode) return null;
 
-    // Extract order details safely (this part remains secure)
+    // Extract order details safely
     return {
       id: select('string(id)', orderNode),
       customer: select('string(customer)', orderNode),
