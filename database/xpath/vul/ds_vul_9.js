@@ -63,8 +63,8 @@ app.get('/movies/rating', validateMovieTitle, (req, res) => {
     try {
         const movieTitle = req.query.movieTitle;
         
-        // Vulnerable XPath query with direct string concatenation
-        const query = `/movies/movie[title="` + movieTitle + `"]/rating/text()`;
+        // PROPERLY VULNERABLE XPath query with string concatenation
+        const query = `/movies/movie[title='${movieTitle}']/rating/text()`;
         
         // Execute XPath query
         const result = xpath.select(query, moviesDoc);
