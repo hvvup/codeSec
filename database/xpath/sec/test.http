@@ -1,68 +1,167 @@
-###1
-### GET 사용자 홈 디렉터리 (정상)
-GET http://localhost:3000/user/home?userName=alice
+###sec1
+### 1. Valid request - should return 200 OK
+GET http://localhost:3000/messages/from?sender=alice@example.com
+
+### 2. Valid request but no messages found - should return 404 Not Found
+GET http://localhost:3000/messages/from?sender=nonexistent@example.com
+
+### 3. Missing sender parameter - should return 400 Bad Request
+GET http://localhost:3000/messages/from
+
+### 4. Invalid email format - should return 400 Bad Request
+GET http://localhost:3000/messages/from?sender=notanemail
+
+### 5. Rate limit test (run this multiple times quickly) - should eventually return 429 Too Many Requests
+GET http://localhost:3000/messages/from?sender=bob@example.com
+
+###sec10
+### 1. Valid Order Request - Should return 200 OK
+GET http://localhost:3000/order/detail?orderId=ORD-1002
 Accept: application/json
 
-### GET 존재하지 않는 사용자
-GET http://localhost:3000/user/home?userName=charlie
+### 2. Non-existent Order - Should return 404 Not Found
+GET http://localhost:3000/order/detail?orderId=ORD-9999
 Accept: application/json
 
-### GET 빈 값 테스트
-GET http://localhost:3000/user/home?userName=
+### 3. Missing orderId Parameter - Should return 400 Bad Request
+GET http://localhost:3000/order/detail
 Accept: application/json
 
-###2
-### ✅ 정상 검색: 존재하는 제목
-GET http://localhost:3000/posts/search?title=Node.js%20Tips
+### 4. Invalid orderId Type - Should return 400 Bad Request
+GET http://localhost:3000/order/detail?orderId[]=array
 Accept: application/json
 
-### ❌ 존재하지 않는 제목
-GET http://localhost:3000/posts/search?title=Unknown%20Post
+### 5. Excessively Long orderId - Should return 400 Bad Request (DOS protection)
+GET http://localhost:3000/order/detail?orderId=ORD-1002_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 Accept: application/json
 
-### ❌ 빈 title 값 (400 Bad Request)
-GET http://localhost:3000/posts/search?title=
+### 6. XPath Injection Attempt 1 - Should return 404 (properly sanitized)
+GET http://localhost:3000/order/detail?orderId=' or '1'='1
 Accept: application/json
 
-###3
-### 이메일이 존재하고 verified=true인 경우
-GET http://localhost:3000/verify/email?email=alice@example.com
-
-### 이메일이 존재하고 verified=false인 경우
-GET http://localhost:3000/verify/email?email=bob@example.com
-
-### 이메일이 존재하지 않는 경우
-GET http://localhost:3000/verify/email?email=notfound@example.com
-
-### 잘못된 요청 (빈 값)
-GET http://localhost:3000/verify/email?email=
-
-###4
-### 존재하는 책 검색
-GET http://localhost:3000/book?isbn=978-0132350884
+### 7. XPath Injection Attempt 2 - Should return 404 (properly sanitized)
+GET http://localhost:3000/order/detail?orderId=ORD-1001' or true() or '
 Accept: application/json
 
-### 존재하는 다른 책 검색
-GET http://localhost:3000/book?isbn=978-0201616224
+### 8. XPath Injection Attempt 3 - Should return 404 (properly sanitized)
+GET http://localhost:3000/order/detail?orderId=ORD-1001'] | //* | order['
 Accept: application/json
 
-### 없는 ISBN 검색 (404 예상)
-GET http://localhost:3000/book?isbn=000-0000000000
+###sec7
+### 1. Valid product code lookup (should return 200 OK)
+GET http://localhost:3000/stock?productCode=PROD001
 Accept: application/json
 
-### 빈 isbn 파라미터 (400 예상)
-GET http://localhost:3000/book?isbn=
+### 2. Product not found (should return 404 Not Found)
+GET http://localhost:3000/stock?productCode=PROD999
 Accept: application/json
 
-###5
-### 정상: employeeId=101
-GET http://localhost:3000/employee/salary?employeeId=101
+### 3. Missing productCode parameter (should return 400 Bad Request)
+GET http://localhost:3000/stock
+Accept: application/json
 
-### 정상: employeeId=102
-GET http://localhost:3000/employee/salary?employeeId=102
+### 4. Invalid product code format (should return 400 Bad Request)
+GET http://localhost:3000/stock?productCode=invalid!code
+Accept: application/json
 
-### 없는 직원: employeeId=999
-GET http://localhost:3000/employee/salary?employeeId=999
+### 5. XPath injection attempt (should be safely handled - return 404 or 400)
+GET http://localhost:3000/stock?productCode=' or '1'='1
+Accept: application/json
 
-### 빈 employeeId (400 Bad Request)
-GET http://localhost:3000/employee/salary?employeeId=
+### 6. Another XPath injection attempt (should be safely handled)
+GET http://localhost:3000/stock?productCode=PROD001']|//*|//*[contains('PROD001
+Accept: application/json
+
+### 7. Extremely long product code (should return 400 due to length validation)
+GET http://localhost:3000/stock?productCode=ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890
+Accept: application/json
+
+### 8. SQL injection attempt (should be safely handled as invalid format)
+GET http://localhost:3000/stock?productCode=PROD001; DROP TABLE products;--
+Accept: application/json
+
+###sec8
+### 1. 공백 포함 정상 요청 (200 OK)
+GET http://localhost:3000/grades?studentId=%20s1001%20
+
+### 2. 대소문자 혼합 (200 OK)
+GET http://localhost:3000/grades?studentId=S1001
+
+### 3. 잘못된 형식 (400 Bad Request)
+GET http://localhost:3000/grades?studentId=s123
+
+### 4. 존재하지 않는 ID (404 Not Found)
+GET http://localhost:3000/grades?studentId=s9999
+
+###sec9
+### 1. Valid request - should return 200 OK
+GET http://localhost:3000/movies/rating?movieTitle=The%20Shawshank%20Redemption
+Accept: application/json
+
+### 2. Valid request with different movie - should return 200 OK
+GET http://localhost:3000/movies/rating?movieTitle=The%20Godfather
+Accept: application/json
+
+### 3. Movie not found - should return 404 Not Found
+GET http://localhost:3000/movies/rating?movieTitle=Non%20Existent%20Movie
+Accept: application/json
+
+### 4. Missing movieTitle parameter - should return 400 Bad Request
+GET http://localhost:3000/movies/rating
+Accept: application/json
+
+### 5. Empty movieTitle parameter - should return 400 Bad Request
+GET http://localhost:3000/movies/rating?movieTitle=
+Accept: application/json
+
+### 6. XPath Injection attempt 1 - should return 400 Bad Request
+GET http://localhost:3000/movies/rating?movieTitle='%20or%20'1'='1
+Accept: application/json
+
+### 7. XPath Injection attempt 2 - should return 400 Bad Request
+GET http://localhost:3000/movies/rating?movieTitle=The%20Dark%20Knight'%20or%20'1'='1
+Accept: application/json
+
+### 8. XPath Injection attempt 3 - should return 400 Bad Request
+GET http://localhost:3000/movies/rating?movieTitle=The%20Dark%20Knight']%20|%20//*[contains('1','1
+Accept: application/json
+
+### 9. Malicious input with angle brackets - should return 400 Bad Request
+GET http://localhost:3000/movies/rating?movieTitle=<script>alert(1)</script>
+Accept: application/json
+
+### 10. Malicious input with XML tags - should return 400 Bad Request
+GET http://localhost:3000/movies/rating?movieTitle=<movie><title>Inception</title></movie>
+Accept: application/json
+
+### 11. SQL Injection attempt (though not relevant, tests general input sanitization) - should return 400 Bad Request
+GET http://localhost:3000/movies/rating?movieTitle=Inception';%20DROP%20TABLE%20movies;--
+Accept: application/json
+
+### 12. Extremely long input - should return 400 Bad Request
+GET http://localhost:3000/movies/rating?movieTitle=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Accept: application/json
+
+### 13. Special characters - should return 404 Not Found (if not in DB) or 200 OK (if exists)
+GET http://localhost:3000/movies/rating?movieTitle=Movie!@#$%^&*()
+Accept: application/json
+
+### 14. Unicode characters - should return 404 Not Found (if not in DB) or 200 OK (if exists)
+GET http://localhost:3000/movies/rating?movieTitle=こんにちは世界
+Accept: application/json
+
+### 15. Numeric input - should return 404 Not Found (if not in DB) or 200 OK (if exists)
+GET http://localhost:3000/movies/rating?movieTitle=12345
+Accept: application/json
+
+### 6. XPath Injection attempt 1 - currently returns 404 (should be 400)
+GET http://localhost:3000/movies/rating?movieTitle='%20or%20'1'='1
+Accept: application/json
+
+### 7. XPath Injection attempt 2 - currently returns 404 (should be 400)
+GET http://localhost:3000/movies/rating?movieTitle=The%20Dark%20Knight'%20or%20'1'='1
+Accept: application/json
+
+### 8. XPath Injection attempt 3 - currently returns 404 (should be 400)
+GET http://localhost:3000/movies/rating?movieTitle=The%20Dark%20Knight']%20|%20//*[contains('1','1
+Accept: application/json

