@@ -54,14 +54,6 @@ try {
   process.exit(1);
 }
 
-// Function to properly escape XPath string literals
-function escapeXPathString(str) {
-  if (str === null || str === undefined) return "''";
-  
-  // Escape single quotes by replacing them with escaped quotes
-  return "'" + String(str).replace(/'/g, "''") + "'";
-}
-
 // Validate sender email format
 const isValidSender = (sender) => {
   if (typeof sender !== 'string') return false;
@@ -86,10 +78,10 @@ app.get('/messages/from', (req, res) => {
       });
     }
 
-    // Secure XPath query with proper escaping
+    // Secure XPath query using parameterization
     const select = xpath.useNamespaces({});
-    const xpathQuery = `//message[sender/text()=${escapeXPathString(sender)}]`;
-    const messages = select(xpathQuery, xmlDoc);
+    const xpathQuery = '//message[sender/text()=$sender]';
+    const messages = select(xpathQuery, xmlDoc, false, { sender: sender });
 
     if (!messages || messages.length === 0) {
       return res.status(404).json({

@@ -36,28 +36,14 @@ const inventoryXML = `
 // Parse the XML document once at startup
 const xmlDoc = new DOMParser().parseFromString(inventoryXML);
 
-// Function to safely escape XPath string literals
-function escapeXPathString(str) {
-    if (str === null || str === undefined) return '""';
-    if (typeof str !== 'string') str = String(str);
-    
-    // Escape quotes by doubling them and wrap in quotes
-    if (str.indexOf('"') === -1) {
-        return `"${str}"`;
-    }
-    if (str.indexOf("'") === -1) {
-        return `'${str}'`;
-    }
-    // If both quote types are present, use concat()
-    return `concat("${str.replace(/"/g, '",\'"\',"')}")`;
-}
-
 // Validate product code format
 const isValidProductCode = (code) => {
-    return typeof code === 'string' && /^PROD\d{3}$/.test(code);
+    if (typeof code !== 'string') return false;
+    // Product codes in our system follow PRODXXX format
+    return /^PROD\d{3}$/.test(code);
 };
 
-// Secure product lookup with input validation and XPath escaping
+// Secure XPath query using parameterization
 const findProductByCode = (productCode) => {
     try {
         if (!isValidProductCode(productCode)) {
@@ -65,8 +51,11 @@ const findProductByCode = (productCode) => {
         }
 
         const select = xpath.useNamespaces({});
-        const query = `//product[code=${escapeXPathString(productCode)}]/stock/text()`;
-        const result = select(query, xmlDoc);
+        // Parameterized XPath query
+        const query = '//product[code=$productCode]/stock/text()';
+        
+        // Execute the secure query with parameters
+        const result = select(query, xmlDoc, false, { productCode: productCode });
         
         return result.length > 0 ? result[0].nodeValue : null;
     } catch (error) {
@@ -75,7 +64,7 @@ const findProductByCode = (productCode) => {
     }
 };
 
-// GET endpoint for stock lookup with validation
+// GET endpoint for stock lookup
 app.get('/stock', (req, res) => {
     const productCode = req.query.productCode;
     if (!productCode) {
@@ -86,8 +75,7 @@ app.get('/stock', (req, res) => {
     
     if (!isValidProductCode(productCode)) {
         return res.status(400).json({
-            error: 'Invalid product code format',
-            validFormat: 'PROD followed by 3 digits (e.g., PROD001)'
+            error: 'Invalid product code format. Must be PROD followed by 3 digits (e.g., PROD001)'
         });
     }
     

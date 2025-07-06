@@ -7,11 +7,7 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 app.use(helmet());
 app.use(express.json());
-app.use(rateLimit({ 
-    windowMs: 15 * 60 * 1000, 
-    max: 100,
-    message: 'Too many requests, please try again later'
-}));
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 
 const studentsXml = `
 <students>
@@ -23,103 +19,59 @@ const studentsXml = `
 
 const doc = new DOMParser().parseFromString(studentsXml);
 
-// Secure XPath string escaping with multiple quote handling
-function escapeXPathString(input) {
-    if (typeof input !== 'string') {
-        input = String(input);
-    }
-    
-    // Handle null/undefined
-    if (!input) return '""';
-    
-    // Escape single quotes by doubling them
-    const escaped = input.replace(/'/g, "''");
-    
-    // Use single quotes if string contains double quotes
-    if (input.includes('"')) {
-        return `'${escaped}'`;
-    }
-    return `"${escaped}"`;
-}
-
-// Strict student ID validation
+// Validate student ID format
 function isValidStudentId(id) {
-    return typeof id === 'string' && /^s\d{3}$/.test(id) && id !== 's000';
+  return typeof id === 'string' && /^s\d{3}$/.test(id); // Only allows s followed by 3 digits
 }
 
 // Secure student data retrieval
 function getStudent(studentId) {
-    try {
-        if (!isValidStudentId(studentId)) {
-            console.warn(`Invalid student ID attempt: ${studentId}`);
-            return null;
-        }
-
-        const expr = `//student[id=${escapeXPathString(studentId)}]`;
-        const node = select(expr, doc)?.[0];
-        
-        if (!node) return null;
-
-        // Whitelist of allowed fields
-        const allowedFields = new Set(['id', 'name', 'gpa']);
-        const result = {};
-        
-        Array.from(node.childNodes).forEach(child => {
-            if (child.nodeType === 1 && allowedFields.has(child.nodeName)) {
-                result[child.nodeName] = child.textContent;
-            }
-        });
-
-        return Object.keys(result).length > 0 ? result : null;
-    } catch (err) {
-        console.error('Security error in getStudent:', err);
-        return null;
+  try {
+    if (!isValidStudentId(studentId)) {
+      return null;
     }
+
+    // Parameterized XPath query
+    const expr = '//student[id=$studentId]';
+    const node = select(expr, doc, false, { studentId })?.[0];
+    
+    if (!node) return null;
+
+    // Only return non-sensitive fields
+    return {
+      name: select('string(name/text())', node),
+      gpa: select('string(gpa/text())', node)
+    };
+  } catch (err) {
+    console.error('Error retrieving student data:', err);
+    return null;
+  }
 }
 
-// Secure route handler with validation
 app.get('/grades', (req, res) => {
-    const { studentId } = req.query;
-    
-    // Input validation
-    if (!studentId || typeof studentId !== 'string') {
-        return res.status(400).json({ 
-            error: 'Valid student ID required',
-            example: 's1001' 
-        });
-    }
+  const { studentId } = req.query;
+  
+  if (!studentId) {
+    return res.status(400).json({ error: '학생 ID 필요' });
+  }
 
-    // Additional format validation
-    if (!isValidStudentId(studentId)) {
-        return res.status(400).json({ 
-            error: 'Invalid student ID format',
-            validFormat: 'Must be "s" followed by 3 digits (e.g., s1001)'
-        });
-    }
-
-    const student = getStudent(studentId);
-    if (!student) {
-        return res.status(404).json({ 
-            error: 'Student not found',
-            note: 'Valid ID format but no matching record'
-        });
-    }
-
-    // Explicitly define response structure
-    res.json({
-        id: student.id,
-        name: student.name,
-        gpa: student.gpa
-    });
+  if (!isValidStudentId(studentId)) {
+    return res.status(400).json({ error: '유효하지 않은 학생 ID 형식' });
+  }
+  
+  const student = getStudent(studentId);
+  
+  if (!student) {
+    return res.status(404).json({ error: '학생 없음' });
+  }
+  
+  res.json(student);
 });
 
-// Enhanced error handling
+// Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('Server error:', err);
-    res.status(500).json({ 
-        error: 'Internal server error',
-        details: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+  console.error('Server error:', err);
+  res.status(500).json({ error: '서버 오류 발생' });
 });
 
-app.listen(3000, () => console.log('Server running securely on http://localhost:3000'));
+app.listen(3000, () => console.log('서버 실행: http://localhost:3000'));

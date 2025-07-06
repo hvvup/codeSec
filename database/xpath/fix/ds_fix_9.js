@@ -40,26 +40,7 @@ try {
     process.exit(1);
 }
 
-// Secure XPath string escaping function
-function escapeXPathString(input) {
-    if (typeof input !== 'string') {
-        input = String(input);
-    }
-    
-    // Handle null/undefined/empty
-    if (!input) return '""';
-    
-    // Escape single quotes by doubling them
-    const escaped = input.replace(/'/g, "''");
-    
-    // Use single quotes if string contains double quotes
-    if (input.includes('"')) {
-        return `'${escaped}'`;
-    }
-    return `"${escaped}"`;
-}
-
-// Enhanced middleware to validate movie titles
+// Middleware to validate query parameters
 const validateMovieTitle = (req, res, next) => {
     if (!req.query.movieTitle || typeof req.query.movieTitle !== 'string') {
         return res.status(400).json({
@@ -67,20 +48,10 @@ const validateMovieTitle = (req, res, next) => {
         });
     }
     
-    // More comprehensive input validation
-    const movieTitle = req.query.movieTitle;
-    if (!/^[\w\s\-':.,!?]+$/.test(movieTitle)) {
+    // Basic input validation - reject potentially malicious input
+    if (req.query.movieTitle.includes('<') || req.query.movieTitle.includes('>')) {
         return res.status(400).json({
-            error: 'Invalid characters in movieTitle',
-            validChars: 'Only letters, numbers, spaces, and basic punctuation'
-        });
-    }
-    
-    // Length validation
-    if (movieTitle.length > 100) {
-        return res.status(400).json({
-            error: 'Movie title too long',
-            maxLength: 100
+            error: 'Invalid characters in movieTitle'
         });
     }
     
@@ -92,11 +63,11 @@ app.get('/movies/rating', validateMovieTitle, (req, res) => {
     try {
         const movieTitle = req.query.movieTitle;
         
-        // Secure XPath query with proper escaping
-        const query = `/movies/movie[title=${escapeXPathString(movieTitle)}]/rating/text()`;
+        // Secure parameterized XPath query
+        const query = '/movies/movie[title=$movieTitle]/rating/text()';
         
-        // Execute XPath query
-        const result = xpath.select(query, moviesDoc);
+        // Execute XPath query with parameter
+        const result = xpath.select(query, moviesDoc, false, { movieTitle });
         
         if (result && result.length > 0) {
             const rating = result[0].nodeValue;
@@ -113,8 +84,7 @@ app.get('/movies/rating', validateMovieTitle, (req, res) => {
     } catch (err) {
         console.error('Error processing request:', err);
         res.status(500).json({
-            error: 'Internal server error',
-            details: process.env.NODE_ENV === 'development' ? err.message : undefined
+            error: 'Internal server error'
         });
     }
 });
@@ -122,15 +92,12 @@ app.get('/movies/rating', validateMovieTitle, (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
-    res.status(500).json({ 
-        error: 'Internal server error',
-        details: process.env.NODE_ENV === 'development' ? err.message : undefined
-    });
+    res.status(500).json({ error: 'Something went wrong!' });
 });
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`Server running securely on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
 
 // Export for testing purposes
