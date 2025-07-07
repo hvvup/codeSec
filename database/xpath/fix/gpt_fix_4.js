@@ -36,7 +36,7 @@ const xmlData = `
 
 const xmlDoc = new DOMParser().parseFromString(xmlData);
 
-// Escaping function for XPath string literals (prevents injection)
+// Helper function to escape user input for XPath string literals
 function escapeForXPath(str) {
   if (str.includes('"') && str.includes("'")) {
     return 'concat("' + str.replace(/"/g, '", \'"\', "') + '")';
@@ -50,23 +50,14 @@ function escapeForXPath(str) {
 app.get('/book', (req, res) => {
   const { isbn } = req.query;
 
-  // Input validation
   if (typeof isbn !== 'string' || isbn.trim() === '') {
     return res.status(400).json({ error: 'Missing or invalid isbn parameter.' });
   }
 
-  const trimmedIsbn = isbn.trim();
-
-  // Optional: Validate format more strictly (ISBN-10 or ISBN-13 format)
-  const isbnRegex = /^(97(8|9))?\d{9}(\d|X)|\d{3}-\d{10}$/;
-  if (!isbnRegex.test(trimmedIsbn)) {
-    return res.status(400).json({ error: 'Invalid ISBN format.' });
-  }
-
   try {
-    // ✅ Secure: escape user input before using it in XPath
-    const safeIsbn = escapeForXPath(trimmedIsbn);
-    const xpathExpr = `/library/book[isbn=${safeIsbn}]`;
+    // FIX: Escape user input before using in XPath query
+    const escapedIsbn = escapeForXPath(isbn);
+    const xpathExpr = '/library/book[isbn=' + escapedIsbn + ']';
 
     const nodes = xpath.select(xpathExpr, xmlDoc);
 
@@ -79,7 +70,7 @@ app.get('/book', (req, res) => {
     const authorNode = xpath.select('string(author)', bookNode);
 
     return res.json({
-      isbn: trimmedIsbn,
+      isbn: isbn.trim(),
       title: titleNode,
       author: authorNode,
     });

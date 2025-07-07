@@ -52,16 +52,10 @@ app.get('/verify/email', (req, res) => {
     return res.status(400).json({ error: 'Invalid or missing email parameter.' });
   }
 
-  // Basic format check (tighten if needed)
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    return res.status(400).json({ error: 'Invalid email format.' });
-  }
-
   try {
-    // Use escaped value in XPath to prevent injection
-    const safeEmail = escapeForXPath(email);
-    const xpathExpr = `/users/user[email=${safeEmail}]/verified/text()`;
+    // ✅ FIXED: escape user input before using in XPath expression
+    const escapedEmail = escapeForXPath(email);
+    const xpathExpr = "/users/user[email=" + escapedEmail + "]/verified/text()";
 
     const nodes = xpath.select(xpathExpr, xmlDoc);
 

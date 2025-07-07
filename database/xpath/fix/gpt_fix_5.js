@@ -50,13 +50,13 @@ app.get('/employee/salary', (req, res) => {
 
   const trimmedId = employeeId.trim();
 
-  // ✅ Strict validation: only digits allowed (employee ID format)
+  // Strict validation: only digits allowed (employee ID format)
   if (!/^\d+$/.test(trimmedId)) {
     return res.status(400).json({ error: 'Invalid employee ID format.' });
   }
 
   try {
-    // ✅ Escape user input before inserting into XPath expression
+    // Escape user input before inserting into XPath expression
     const safeId = escapeForXPath(trimmedId);
     const xpathExpr = `/company/employee[id=${safeId}]/salary/text()`;
 

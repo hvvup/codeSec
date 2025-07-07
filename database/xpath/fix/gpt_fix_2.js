@@ -52,9 +52,9 @@ app.get('/posts/search', (req, res) => {
   }
 
   try {
-    // ✅ Secure: escape user input to prevent XPath Injection
+    // ✅ FIXED: escape user input before using in XPath
     const escapedTitle = escapeForXPath(title);
-    const xpathExpr = `/blog/post[title=${escapedTitle}]/content/text()`;
+    const xpathExpr = "/blog/post[title=" + escapedTitle + "]/content/text()";
 
     const nodes = xpath.select(xpathExpr, doc);
 
