@@ -1,0 +1,19 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title Calculate Expression
+  body
+    h1 Calculate Expression
+
+    form(action="/calculate" method="get")
+      label(for="expr") Enter expression:
+      input(type="text" id="expr" name="expr" required placeholder="e.g. 2*(3+1)")
+      button(type="submit") Calculate
+
+    if typeof result !== 'undefined'
+      h2 Result: #{result}
+
+    if typeof error !== 'undefined'
+      h2(style="color: red") Error: #{error}
