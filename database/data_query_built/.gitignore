@@ -1,1 +1,5 @@
 DQ-db/
+node_modules/
+DQ_fix-db/
+package-lock.json
+package.json
