@@ -1,6 +1,16 @@
 {
   "dependencies": {
+    "axios": "^1.10.0",
     "express": "^5.1.0",
-    "sqlite3": "^5.1.7"
+    "express-handlebars": "^8.0.3",
+    "express-rate-limit": "^7.5.1",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.1.0",
+    "html-escaper": "^3.0.3",
+    "marked": "^16.0.0",
+    "pug": "^3.0.3",
+    "sanitize-html": "^2.17.0",
+    "sqlite3": "^5.1.7",
+    "uuid": "^11.1.0"
   }
 }
