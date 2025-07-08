@@ -1,0 +1,5 @@
+{
+  "welcome_message": "Hello World",
+  "__proto__.polluted": "polluted value",
+  "constructor.prototype.polluted": "constructor pollution"
+}

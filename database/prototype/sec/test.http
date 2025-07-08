@@ -197,6 +197,26 @@ Content-Type: application/json
 }
 
 ###sec9
+### 정상 요청
+PUT http://localhost:3000/translate/ko
+Content-Type: application/json
+
+{
+  "phraseKey": "welcome",
+  "translation": "환영합니다"
+}
+
+### 비정상 요청 (400 Bad Request 예상)
+PUT http://localhost:3000/translate/!!
+Content-Type: application/json
+
+{
+  "phraseKey": "invalid key!",
+  "translation": "테스트"
+}
+
+### 서버 상태 확인
+GET http://localhost:3000/health
 ### 1. 가장 간단한 요청으로 테스트
 PUT http://localhost:3000/translate/ko
 Content-Type: application/json
