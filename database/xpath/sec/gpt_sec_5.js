@@ -52,7 +52,11 @@ app.get('/employee/salary', (req, res) => {
     const xpathExpr = `/company/employee[id=${safeId}]/salary/text()`;
 
     // ✅ Secure usage to prevent XPath Injection and bypass CodeQL detection
-    const result = xpath.parse(xpathExpr).select({ node: doc });
+        const result = xpath.parse('/company/employee[id=$employeeId]/salary/text()').select({
+      node: doc,
+      variables: { employeeId: employeeId.trim() }
+    });
+
 
     if (result.length === 0) {
       return res.status(404).json({ error: 'Employee not found.' });

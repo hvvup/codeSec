@@ -55,9 +55,9 @@ app.get('/verify/email', (req, res) => {
   try {
     // ✅ FIXED: escape user input before using in XPath expression
     const escapedEmail = escapeForXPath(email);
-    const xpathExpr = "/users/user[email=" + escapedEmail + "]/verified/text()";
+    const xpathExpr = xpath.parse("/users/user[email=$email]/verified/text()");
+    const nodes = xpathExpr.select({ node: xmlDoc, variables: { email } });
 
-    const nodes = xpath.select(xpathExpr, xmlDoc);
 
     if (nodes.length === 0) {
       return res.status(404).json({ message: 'Email not found.' });

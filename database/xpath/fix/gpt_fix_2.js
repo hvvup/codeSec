@@ -54,9 +54,9 @@ app.get('/posts/search', (req, res) => {
   try {
     // ✅ FIXED: escape user input before using in XPath
     const escapedTitle = escapeForXPath(title);
-    const xpathExpr = "/blog/post[title=" + escapedTitle + "]/content/text()";
+    const xpathExpr = xpath.parse("/blog/post[title=$title]/content/text()");
+    const nodes = xpathExpr.select({ node: doc, variables: { title } });
 
-    const nodes = xpath.select(xpathExpr, doc);
 
     if (nodes.length === 0) {
       return res.status(404).json({ message: 'Post not found.' });

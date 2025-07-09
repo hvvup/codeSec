@@ -57,9 +57,8 @@ app.get('/book', (req, res) => {
   try {
     // FIX: Escape user input before using in XPath query
     const escapedIsbn = escapeForXPath(isbn);
-    const xpathExpr = '/library/book[isbn=' + escapedIsbn + ']';
-
-    const nodes = xpath.select(xpathExpr, xmlDoc);
+    const xpathExpr = xpath.parse('/library/book[isbn=$isbn]');
+    const nodes = xpathExpr.select({ node: xmlDoc, variables: { isbn } });
 
     if (nodes.length === 0) {
       return res.status(404).json({ error: 'Book not found.' });

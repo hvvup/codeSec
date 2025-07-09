@@ -52,8 +52,9 @@ app.get('/user/home', (req, res) => {
   try {
     // ✅ FIXED: escape user input before inserting into XPath expression
     const escapedUserName = escapeForXPath(userName);
-    const xpathExpr = "/users/user[login=" + escapedUserName + "]/home/text()";
-    const nodes = xpath.select(xpathExpr, doc);
+    const xpathExpr = xpath.parse("/users/user[login/text()=$userName]/home/text()");
+    const nodes = xpathExpr.select({ node: doc, variables: { userName } });
+
 
     if (nodes.length === 0) {
       return res.status(404).json({ error: 'User not found.' });
