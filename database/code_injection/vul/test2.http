@@ -1,0 +1,33 @@
+###1
+GET http://localhost:3000/hello?name=<script>alert(1)</script>
+
+###
+
+GET http://localhost:3000/eval?code=2+*+3
+
+###
+
+GET http://localhost:3000/func?logic=2+%2B+3
+
+###
+
+GET http://localhost:3000/xss?msg=<img%20src=x%20onerror=alert(1)>
+
+###2
+http://localhost:3000/calculate?expr=2*(3%2B1) 
+Accept: application/json
+
+###3
+GET /custom-message?logic=score%3E%3D50 HTTP/1.1
+Host: localhost:3000
+
+###4
+POST /filter HTTP/1.1
+Host: localhost:3000
+Content-Type: application/json
+
+{"field":"name","value":"Alice"}
+
+###5
+GET /sort?by=score HTTP/1.1
+Host: localhost:3000

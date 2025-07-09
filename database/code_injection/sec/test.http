@@ -1,0 +1,27 @@
+###1
+GET http://localhost:3000/hello?name=Alice
+
+###2
+http://localhost:3000/calculate?expr=2*(3%2B1) 
+Accept: application/json
+
+###3
+GET http://localhost:3000/custom-message?logic=age%3E18
+
+###
+GET http://localhost:3000/custom-message?logic=score%3D%3D80
+
+###
+GET http://localhost:3000/custom-message?logic=score%3C%3D50
+
+###4
+POST http://localhost:3000/filter
+Content-Type: application/json
+
+{
+  "field": "name",
+  "value": "Alice"
+}
+
+###5
+GET http://localhost:3000/sort?by=score
