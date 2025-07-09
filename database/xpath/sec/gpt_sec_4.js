@@ -1,10 +1,9 @@
 // secureBookLookup.js
 
 const express = require('express');
-const xpath = require('xpath');
-const { DOMParser } = require('xmldom');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const libxmljs = require('libxmljs2');
 
 const app = express();
 const PORT = 3000;
@@ -34,19 +33,10 @@ const xmlData = `
 </library>
 `;
 
-const xmlDoc = new DOMParser().parseFromString(xmlData);
+// Parse XML using libxmljs2 (safe DOM)
+const xmlDoc = libxmljs.parseXml(xmlData);
 
-// Helper function to escape user input for XPath string literals
-function escapeForXPath(str) {
-  if (str.includes('"') && str.includes("'")) {
-    return 'concat("' + str.replace(/"/g, '", \'"\', "') + '")';
-  }
-  if (str.includes('"')) {
-    return `'${str}'`;
-  }
-  return `"${str}"`;
-}
-
+// Route: GET /book?isbn=...
 app.get('/book', (req, res) => {
   const { isbn } = req.query;
 
@@ -55,20 +45,22 @@ app.get('/book', (req, res) => {
   }
 
   try {
-    const safeIsbn = escapeForXPath(isbn.trim());
-    const xpathExpr = `/library/book[isbn=${safeIsbn}]`;
-    const nodes = xpath.select(xpathExpr, xmlDoc);
+    const safeIsbn = isbn.trim();
+
+    // XPath search using exact text match (XPath 1.0 safe expression)
+    const xpathExpr = `/library/book[isbn[text()="${safeIsbn}"]]`;
+    const nodes = xmlDoc.find(xpathExpr);
 
     if (nodes.length === 0) {
       return res.status(404).json({ error: 'Book not found.' });
     }
 
     const bookNode = nodes[0];
-    const titleNode = xpath.select('string(title)', bookNode);
-    const authorNode = xpath.select('string(author)', bookNode);
+    const titleNode = bookNode.get('title')?.text();
+    const authorNode = bookNode.get('author')?.text();
 
     return res.json({
-      isbn: isbn.trim(),
+      isbn: safeIsbn,
       title: titleNode,
       author: authorNode,
     });

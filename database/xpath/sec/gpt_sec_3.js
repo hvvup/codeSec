@@ -1,10 +1,10 @@
 // verifyEmail.js
 
 const express = require('express');
-const xpath = require('xpath');
-const { DOMParser } = require('xmldom');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const { DOMParser } = require('xmldom');
+const { evaluateXPathToString } = require('fontoxpath'); // 안전한 XPath 라이브러리
 
 const app = express();
 const PORT = 3000;
@@ -34,15 +34,6 @@ const xmlData = `
 // Parse XML string into DOM
 const xmlDoc = new DOMParser().parseFromString(xmlData);
 
-// Escaping function for XPath string literals (avoids injection)
-function escapeForXPath(str) {
-  if (str.includes('"') && str.includes("'")) {
-    return 'concat("' + str.replace(/"/g, '", \'"\', "') + '")';
-  }
-  if (str.includes('"')) return `'${str}'`;
-  return `"${str}"`;
-}
-
 // Route: GET /verify/email?email=someone@example.com
 app.get('/verify/email', (req, res) => {
   const email = req.query.email;
@@ -53,19 +44,23 @@ app.get('/verify/email', (req, res) => {
   }
 
   try {
-    const safeEmail = escapeForXPath(email.trim());
-    const xpathExpr = `/users/user[email=${safeEmail}]/verified/text()`;
+    // Use variable binding to avoid XPath Injection
+    const isVerifiedStr = evaluateXPathToString(
+      `/users/user[email=$email]/verified/text()`,
+      xmlDoc,
+      null,        // domFacade (null is fine for xmldom)
+      null,        // variablesInScope (unused)
+      { email: email.trim() } // variable bindings
+    );
 
-    const nodes = xpath.select(xpathExpr, xmlDoc);
-
-    if (nodes.length === 0) {
+    if (!isVerifiedStr) {
       return res.status(404).json({ message: 'Email not found.' });
     }
 
-    const isVerified = nodes[0].nodeValue.trim() === 'true';
+    const isVerified = isVerifiedStr.trim() === 'true';
     return res.status(200).json({ email, verified: isVerified });
   } catch (err) {
-    console.error('XPath error:', err);
+    console.error('XPath evaluation error:', err);
     return res.status(500).json({ error: 'Internal Server Error' });
   }
 });
