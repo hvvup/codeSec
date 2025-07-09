@@ -1,0 +1,87 @@
+###fix1
+### /hello - normal name (should render safely)
+GET http://localhost:3000/hello?name=John
+# Expect: 200 OK
+
+###
+
+### /hello - attempt code injection in template (should escape properly)
+GET http://localhost:3000/hello?name=#{process.exit()}
+# Expect: 200 OK (no code execution, escaped safely)
+
+###
+
+### /hello - JS context injection attempt (test script injection)
+GET http://localhost:3000/hello?name="</script><script>alert('x')</script>
+# Expect: 200 OK (injected script is escaped, should not run)
+
+###
+
+### /eval - normal math expression
+GET http://localhost:3000/eval?code=2+2*2
+# Expect: 200 OK (Result: 6)
+
+###
+
+### /eval - malicious expression (arbitrary JS code, blocked by mathjs)
+GET http://localhost:3000/eval?code=process.exit()
+# Expect: 400 Bad Request
+
+###
+
+### /eval - malformed input
+GET http://localhost:3000/eval?code=2+*+2
+# Expect: 400 Bad Request
+
+###
+
+### /func - safe expression
+GET http://localhost:3000/func?logic=10/2
+# Expect: 200 OK (Computed: 5)
+
+###
+
+### /func - function injection attempt
+GET http://localhost:3000/func?logic=process.exit()
+# Expect: 400 Bad Request
+
+###
+
+### /func - arbitrary function call attempt
+GET http://localhost:3000/func?logic=require('fs').readdirSync('.')
+# Expect: 400 Bad Request
+
+###
+
+### /xss - normal message
+GET http://localhost:3000/xss?msg=Hello%20World
+# Expect: 200 OK (HTML displays escaped)
+
+###
+
+### /xss - reflected XSS attempt
+GET http://localhost:3000/xss?msg=<script>alert('xss')</script>
+# Expect: 200 OK (script escaped, should not execute)
+
+###
+
+### /xss - encoded tag injection
+GET http://localhost:3000/xss?msg=%3Cimg%20src%3Dx%20onerror%3Dalert('XSS')%3E
+# Expect: 200 OK (image tag escaped, no alert)
+
+
+###fix2
+### ✅ 정상 수학식 (should work)
+GET http://localhost:3000/calculate?expr=2*(3+1)
+Accept: application/json
+# Expect: 200 OK
+
+### ✅ 비교 연산 (should work)
+GET http://localhost:3000/calculate?expr=5>3
+Accept: application/json
+# Expect: 200 OK
+
+### ❌ 악성 eval 시도 (should fail)
+GET http://localhost:3000/calculate?expr=process.mainModule.require("child_process").execSync("ls").toString()
+Accept: application/json
+# Expect: 400 Bad Request

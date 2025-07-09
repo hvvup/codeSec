@@ -1,0 +1,9 @@
+doctype html
+html(lang="en")
+  head
+    title Hello Page
+  body
+    h1 Hello #{name}
+    script.
+      var userInput = !{JSON.stringify(name)};
+      console.log("User input:", userInput);
