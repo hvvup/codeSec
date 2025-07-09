@@ -65,30 +65,59 @@ app.post('/email', (req, res) => {
     res.send('No input provided');
 });
 
-// 4. Secure code execution with strict limitations
+// 4. 완전히 안전한 코드 실행 시스템
 app.get('/execute', (req, res) => {
     if (!req.query.code) {
         return res.status(400).send('No code provided');
     }
 
+    // 허용할 최소한의 안전한 문자만 화이트리스트 방식으로 필터링
+    const safeCodeRegex = /^[\d\s+\-*\/().,]+$/;
+    if (!safeCodeRegex.test(req.query.code)) {
+        return res.status(400).send('Invalid code pattern');
+    }
+
     try {
-        // Create a secure context with no access to require or other globals
-        const context = vm.createContext({
-            console: { log: console.log }, // Only allow console.log
-            JSON: JSON, // Allow JSON operations
-            Math: Math, // Allow Math operations
-            result: null
+        // 완전히 새로운 컨텍스트 생성 (빈 객체)
+        const context = vm.createContext(Object.create(null));
+        
+        // 실행할 코드를 완전히 래핑 (엄격 모드 + 제한 시간)
+        const wrappedCode = `
+            'use strict';
+            let __result;
+            try {
+                __result = (${req.query.code});
+            } catch(e) {
+                __result = 'Execution error';
+            }
+            __result;
+        `;
+
+        const script = new vm.Script(wrappedCode, {
+            timeout: 500,  // 0.5초 타임아웃
+            lineOffset: 0,
+            displayErrors: false
         });
 
-        // Run in strict mode with timeout
-        const script = new vm.Script(`'use strict';\nresult = ${req.query.code}`, {
-            timeout: 1000 // 1 second timeout
+        // 결과 값 가져오기
+        const result = script.runInNewContext(context, {
+            breakOnSigint: true,
+            microtaskMode: 'afterEvaluate'
         });
 
-        script.runInContext(context);
-        res.send(`Result: ${escapeHtml(String(context.result))}`);
+        // 결과가 원시 타입이 아닌 경우 차단
+        if (result !== null && 
+            typeof result === 'object' || 
+            typeof result === 'function') {
+            return res.status(400).send('Unsupported result type');
+        }
+
+        // 숫자, 문자열, boolean, null, undefined만 허용
+        const safeResult = typeof result === 'undefined' ? 'undefined' : String(result);
+        return res.send(`Result: ${escapeHtml(safeResult)}`);
     } catch (err) {
-        res.status(400).send('Error executing code');
+        // 모든 오류를 일반적인 메시지로 처리
+        return res.status(400).send('Code execution failed');
     }
 });
 

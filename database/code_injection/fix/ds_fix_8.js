@@ -29,12 +29,15 @@ const getHtmlResponse = (title, content) => {
 
 // Safe calculation function for simple math
 const safeCalculate = (formula) => {
+    // URL 디코딩 후 공백 제거 (선택적)
+    const decodedFormula = decodeURIComponent(formula).replace(/\s+/g, '');
+    
     // Only allow basic arithmetic operations
-    if (!/^[\d\s+\-*/().]+$/.test(formula)) {
+    if (!/^[\d+\-*/().]+$/.test(decodedFormula)) {
         throw new Error('Invalid formula');
     }
     try {
-        return eval(formula); // Limited to math operations only
+        return eval(decodedFormula); // Limited to math operations only
     } catch (e) {
         throw new Error('Calculation error');
     }

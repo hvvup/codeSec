@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const { pug } = require('pug');
+const pug = require('pug'); // 수정: { pug } -> pug
 const app = express();
 
 app.use(express.json());
@@ -38,22 +38,25 @@ app.post('/page', (req, res) => {
     }
 
     // Safe template rendering
-    const template = `
-        doctype html
-        html
-            body
-                h1 Welcome to #{section || 'default'} page
-                p Current year: #{currentYear}
-                div #{rawContent || ''}
-    `;
-    
-    const compiledFn = pug.compile(template);
-    const html = compiledFn({ 
-        currentYear: new Date().getFullYear(),
-        section: section,
-        rawContent: req.body.rawContent || ''
-    });
-    res.send(html);
+    try {
+        const template = `doctype html
+html
+    body
+        h1 Welcome to #{section || 'default'} page
+        p Current year: #{currentYear}
+        div #{rawContent || ''}`;
+
+        const compiledFn = pug.compile(template);
+        const html = compiledFn({ 
+            currentYear: new Date().getFullYear(),
+            section: section,
+            rawContent: req.body.rawContent || ''
+        });
+        res.send(html);
+    } catch (error) {
+        console.error('Template rendering error:', error);
+        res.status(500).json({ error: 'Template rendering failed' });
+    }
 });
 
 app.get('/execute', (req, res) => {

@@ -71,17 +71,269 @@ GET http://localhost:3000/xss?msg=%3Cimg%20src%3Dx%20onerror%3Dalert('XSS')%3E
 
 
 ###fix2
-### ✅ 정상 수학식 (should work)
+### ✅ Normal math expression - should work
 GET http://localhost:3000/calculate?expr=2*(3+1)
 Accept: application/json
-# Expect: 200 OK
 
-### ✅ 비교 연산 (should work)
+### ✅ Safe boolean expression - should work
 GET http://localhost:3000/calculate?expr=5>3
 Accept: application/json
-# Expect: 200 OK
 
-### ❌ 악성 eval 시도 (should fail)
-GET http://localhost:3000/calculate?expr=process.mainModule.require("child_process").execSync("ls").toString()
+### ✅ Empty expression - should return 400
+GET http://localhost:3000/calculate?expr=
 Accept: application/json
 # Expect: 400 Bad Request
+
+### ✅ Missing expr parameter - should return 400
+GET http://localhost:3000/calculate
+Accept: application/json
+# Expect: 400 Bad Request
+
+### 🛡️ Code Injection Attempt: Accessing process object (CWE-094/CWE-095)
+GET http://localhost:3000/calculate?expr=process.mainModule.require('child_process').execSync('ls').toString()
+Accept: application/json
+# Expect: 400 Bad Request
+
+### 🛡️ Code Injection Attempt: Global object
+GET http://localhost:3000/calculate?expr=this.constructor.constructor('return process')()
+Accept: application/json
+# Expect: 400 Bad Request
+
+### 🛡️ Code Injection Attempt: Using disabled mathjs function `eval`
+GET http://localhost:3000/calculate?expr=eval('2+2')
+Accept: application/json
+# Expect: 400 Bad Request
+
+### 🛡️ Code Injection Attempt: Using disabled mathjs function `createUnit`
+GET http://localhost:3000/calculate?expr=createUnit('foo', '1m')
+Accept: application/json
+# Expect: 400 Bad Request
+
+### 🛡️ Code Injection Attempt: Use of JavaScript function constructor
+GET http://localhost:3000/calculate?expr=Function('return 5')()
+Accept: application/json
+# Expect: 400 Bad Request
+
+### 🛡️ XSS-like content as result (CWE-116/CWE-079)
+GET http://localhost:3000/calculate?expr='"<script>alert(1)</script>"'
+Accept: application/json
+# Expect: 200 OK (safe because it's a string, not executed by server)
+# But browser must handle this safely; server escapes it correctly in JSON
+
+### 🛡️ Arbitrary object construction - should be blocked
+GET http://localhost:3000/calculate?expr={a:1}
+Accept: application/json
+# Expect: 400 Bad Request
+
+### ✅ Math expression with power operator - should work
+GET http://localhost:3000/calculate?expr=2^8
+Accept: application/json
+# Expect: 200 OK
+
+###fix3
+### Test 1 - Valid comparison: score >= 50
+GET http://localhost:3000/custom-message?logic=score>=50
+Accept: application/json
+
+# Expected: 200 OK, { "result": true }
+
+### Test 2 - Valid expression: score < age
+GET http://localhost:3000/custom-message?logic=score<age
+Accept: application/json
+
+# Expected: 200 OK, { "result": false }
+
+### Test 3 - Valid arithmetic: age + score
+GET http://localhost:3000/custom-message?logic=age+score
+Accept: application/json
+
+# Expected: 200 OK, { "result": 105 }
+
+### Test 4 - Valid math function: sqrt(score)
+GET http://localhost:3000/custom-message?logic=sqrt(score)
+Accept: application/json
+
+# Expected: 200 OK, { "result": 8.944... }
+
+### Test 5 - Attempt to access process.env (code injection)
+GET http://localhost:3000/custom-message?logic=process.env
+Accept: application/json
+
+# Expected: 400 Bad Request (blocked code injection)
+
+### Test 6 - Attempt to execute arbitrary code
+GET http://localhost:3000/custom-message?logic=eval("2+2")
+Accept: application/json
+
+# Expected: 400 Bad Request (eval is not allowed)
+
+### Test 7 - Attempt to use global object
+GET http://localhost:3000/custom-message?logic=global.process.exit()
+Accept: application/json
+
+# Expected: 400 Bad Request (no access to global object)
+
+### Test 8 - Attempt prototype pollution syntax
+GET http://localhost:3000/custom-message?logic=__proto__.toString
+Accept: application/json
+
+# Expected: 400 Bad Request (not resolvable)
+
+### Test 9 - Attempt to define function
+GET http://localhost:3000/custom-message?logic=function(){return 1}
+Accept: application/json
+
+# Expected: 400 Bad Request (invalid syntax for mathjs)
+
+### Test 10 - Empty logic param
+GET http://localhost:3000/custom-message?logic=
+Accept: application/json
+
+# Expected: 400 Bad Request
+
+###fix4
+### ✅ Valid filter by name (should return Alice records)
+POST http://localhost:3000/filter
+Content-Type: application/json
+
+{
+  "field": "name",
+  "value": "Alice"
+}
+# @expected 200 OK
+
+
+### ✅ Valid filter by age (should return users with age 30)
+POST http://localhost:3000/filter
+Content-Type: application/json
+
+{
+  "field": "age",
+  "value": "30"
+}
+# @expected 200 OK
+
+
+### ✅ Valid filter by email (should return exact match)
+POST http://localhost:3000/filter
+Content-Type: application/json
+
+{
+  "field": "email",
+  "value": "bob@example.com"
+}
+# @expected 200 OK
+
+
+### ❌ Invalid field (not in whitelist) — security test
+POST http://localhost:3000/filter
+Content-Type: application/json
+
+{
+  "field": "role",
+  "value": "admin"
+}
+# @expected 400 Bad Request
+
+
+### ❌ Injection attempt via field — classic code injection test
+POST http://localhost:3000/filter
+Content-Type: application/json
+
+{
+  "field": "name); console.log('hacked'); //",
+  "value": "Alice"
+}
+# @expected 400 Bad Request
+
+
+### ❌ Injection attempt via value — code execution in value
+POST http://localhost:3000/filter
+Content-Type: application/json
+
+{
+  "field": "name",
+  "value": "Alice'); process.exit(); //"
+}
+# @expected 200 OK (safe, returns no match — not executed)
+
+
+### ❌ Prototype pollution attempt — field is __proto__
+POST http://localhost:3000/filter
+Content-Type: application/json
+
+{
+  "field": "__proto__",
+  "value": "polluted"
+}
+# @expected 400 Bad Request
+
+
+### ❌ Nested malicious field attempt — tricking dynamic access
+POST http://localhost:3000/filter
+Content-Type: application/json
+
+{
+  "field": "name.toString()",
+  "value": "Alice"
+}
+# @expected 400 Bad Request
+
+
+### ❌ HTML/JS injection in value — checks XSS resilience (CWE-079)
+POST http://localhost:3000/filter
+Content-Type: application/json
+
+{
+  "field": "name",
+  "value": "<script>alert('xss')</script>"
+}
+# @expected 200 OK (safe — no execution, data-only response)
+
+
+### ❌ JavaScript object injection
+POST http://localhost:3000/filter
+Content-Type: application/json
+
+{
+  "field": "constructor",
+  "value": "malicious"
+}
+# @expected 400 Bad Request
+
+###fix5
+### ✅ Valid sort key: name (Expect: 200 OK)
+GET http://localhost:3000/sort?by=name
+Accept: application/json
+
+### ✅ Valid sort key: age (Expect: 200 OK)
+GET http://localhost:3000/sort?by=age
+Accept: application/json
+
+### ✅ Valid sort key: score (Expect: 200 OK)
+GET http://localhost:3000/sort?by=score
+Accept: application/json
+
+### ❌ Invalid sort key: <script>alert(1)</script> (Expect: 400 Bad Request, tests for XSS defense - CWE-079, CWE-116)
+GET http://localhost:3000/sort?by=<script>alert(1)</script>
+Accept: application/json
+
+### ❌ Invalid sort key: __proto__ (Expect: 400 Bad Request, tests for prototype access injection - CWE-094/CWE-095)
+GET http://localhost:3000/sort?by=__proto__
+Accept: application/json
+
+### ❌ Invalid sort key: constructor.constructor("alert(1)")() (Expect: 400 Bad Request, tests for code injection - CWE-094, CWE-095)
+GET http://localhost:3000/sort?by=constructor.constructor("alert(1)")()
+Accept: application/json
+
+### ❌ Invalid sort key: score.toString.constructor.prototype.hacked=1 (Expect: 400 Bad Request, tests deep prototype injection attempt)
+GET http://localhost:3000/sort?by=score.toString.constructor.prototype.hacked=1
+Accept: application/json
+
+### ❌ Invalid sort key: notAllowedKey (Expect: 400 Bad Request, undefined key)
+GET http://localhost:3000/sort?by=notAllowedKey
+Accept: application/json
+
+### ❌ Missing sort key (Expect: 400 Bad Request)
+GET http://localhost:3000/sort
+Accept: application/json
