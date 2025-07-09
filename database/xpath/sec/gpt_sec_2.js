@@ -1,10 +1,10 @@
 // searchPosts.js
 
 const express = require('express');
-const xpath = require('xpath');
-const { DOMParser } = require('xmldom');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const { evaluateXPathToString } = require('fontoxpath');
+const { DOMParser } = require('@xmldom/xmldom');
 
 const app = express();
 const PORT = 3000;
@@ -31,17 +31,8 @@ const xmlData = `
 </blog>
 `;
 
-// Parse XML once
+// Parse XML once using @xmldom/xmldom
 const doc = new DOMParser().parseFromString(xmlData);
-
-// Function to safely escape XPath string literals
-function escapeForXPath(value) {
-  if (value.includes('"') && value.includes("'")) {
-    return 'concat("' + value.replace(/"/g, '", \'"\', "') + '")';
-  }
-  if (value.includes('"')) return `'${value}'`;
-  return `"${value}"`;
-}
 
 // GET /posts/search?title=...
 app.get('/posts/search', (req, res) => {
@@ -52,16 +43,21 @@ app.get('/posts/search', (req, res) => {
   }
 
   try {
-    const safeTitle = escapeForXPath(title);
-    const xpathExpr = `/blog/post[title=${safeTitle}]/content/text()`;
+    const content = evaluateXPathToString(
+      '/blog/post[title = $title]/content',
+      doc,
+      null,
+      null,
+      {
+        title: title  // variable substitution for safety
+      }
+    );
 
-    const nodes = xpath.select(xpathExpr, doc);
-
-    if (nodes.length === 0) {
+    if (!content) {
       return res.status(404).json({ message: 'Post not found.' });
     }
 
-    return res.status(200).json({ title, content: nodes[0].nodeValue });
+    return res.status(200).json({ title, content });
 
   } catch (err) {
     console.error('XPath Error:', err);

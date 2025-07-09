@@ -7,7 +7,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Sample XML data - in a real app this would be loaded from a file or database
+// Sample XML data
 const sampleXML = `<?xml version="1.0" encoding="UTF-8"?>
 <orders>
   <order>
@@ -66,34 +66,31 @@ const sampleXML = `<?xml version="1.0" encoding="UTF-8"?>
   </order>
 </orders>`;
 
-// Middleware to parse the XML document
+// Parse XML document
 const loadXML = (xmlString) => {
   try {
-    const doc = new DOMParser().parseFromString(xmlString);
-    return doc;
+    return new DOMParser().parseFromString(xmlString);
   } catch (error) {
     console.error('Error parsing XML:', error);
     return null;
   }
 };
 
-// Secure XPath query with parameterized input
-// Updated secure XPath query function
+// Secure XPath query using parameterized input
 const findOrderById = (doc, orderId) => {
   try {
-    // Escape special characters in orderId to prevent XPath injection
-    const escapedOrderId = orderId.replace(/'/g, "''"); // Escape single quotes by doubling them
-    
-    // Use string concatenation with proper escaping (safer alternative)
     const select = xpath.useNamespaces({});
+    
+    // Safe parameterized XPath query
     const orderNode = select(
-      `/orders/order[id='${escapedOrderId}']`,
-      doc
+      `/orders/order[id=$orderId]`,
+      doc,
+      { orderId } // Pass variables as separate parameter
     )[0];
 
     if (!orderNode) return null;
 
-    // Extract order details safely
+    // Extract order details
     return {
       id: select('string(id)', orderNode),
       customer: select('string(customer)', orderNode),
@@ -123,10 +120,10 @@ app.get('/order/detail', (req, res) => {
     });
   }
 
-  // Prevent overly long IDs (basic DOS protection)
-  if (orderId.length > 50) {
+  // Basic input sanitization
+  if (orderId.length > 50 || !/^[a-zA-Z0-9-]+$/.test(orderId)) {
     return res.status(400).json({ 
-      error: 'orderId too long' 
+      error: 'Invalid orderId format' 
     });
   }
 

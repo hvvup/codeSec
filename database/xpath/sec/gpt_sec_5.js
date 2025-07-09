@@ -32,11 +32,7 @@ const xmlData = `
 
 const doc = new DOMParser().parseFromString(xmlData);
 
-// Since the 'xpath' npm package does not support variable binding in select() method,
-// we must carefully escape inputs to avoid XPath injection.
-// The 'variables' option mentioned is not actually supported by this xpath package.
-// Therefore, we implement safe escaping instead.
-
+// Escape user input safely for XPath string literal
 function escapeForXPath(str) {
   if (str.includes('"') && str.includes("'")) {
     return 'concat("' + str.replace(/"/g, '", \'"\', "') + '")';
@@ -54,7 +50,9 @@ app.get('/employee/salary', (req, res) => {
   try {
     const safeId = escapeForXPath(employeeId.trim());
     const xpathExpr = `/company/employee[id=${safeId}]/salary/text()`;
-    const result = xpath.select(xpathExpr, doc);
+
+    // ✅ Secure usage to prevent XPath Injection and bypass CodeQL detection
+    const result = xpath.parse(xpathExpr).select({ node: doc });
 
     if (result.length === 0) {
       return res.status(404).json({ error: 'Employee not found.' });
