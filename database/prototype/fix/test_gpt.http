@@ -1,0 +1,435 @@
+###sec1
+### [1] Valid PUT request (normal usage) - should succeed
+PUT http://localhost:3000/todos/user123?name=task1&text=Buy+milk
+Content-Type: application/json
+
+// EXPECT: 200 OK
+
+###
+
+### [2] Valid PUT request with different task - should succeed
+PUT http://localhost:3000/todos/user123?name=task2&text=Walk+dog
+Content-Type: application/json
+
+// EXPECT: 200 OK
+
+###
+
+### [3] Get all todos for user123 - should show both tasks
+GET http://localhost:3000/todos/user123
+
+// EXPECT: 200 OK
+// EXPECTED BODY CONTAINS:
+// { "task1": "Buy milk", "task2": "Walk dog" }
+
+###
+
+### [4] Malicious PUT attempt using __proto__ - should be blocked
+PUT http://localhost:3000/todos/user123?name=__proto__&text=polluted
+Content-Type: application/json
+
+// EXPECT: 400 Bad Request
+
+###
+
+### [5] Malicious PUT attempt using constructor - should be blocked
+PUT http://localhost:3000/todos/user123?name=constructor&text=polluted
+Content-Type: application/json
+
+// EXPECT: 400 Bad Request
+
+###
+
+### [6] Malicious PUT attempt using prototype - should be blocked
+PUT http://localhost:3000/todos/user123?name=prototype&text=polluted
+Content-Type: application/json
+
+// EXPECT: 400 Bad Request
+
+###
+
+### [7] Get all todos for user123 again - should be unaffected by malicious attempts
+GET http://localhost:3000/todos/user123
+
+// EXPECT: 200 OK
+// EXPECTED BODY DOES NOT CONTAIN: polluted, __proto__, constructor, prototype
+
+###
+
+### [8] PUT request missing query params - should fail
+PUT http://localhost:3000/todos/user123
+Content-Type: application/json
+
+// EXPECT: 400 Bad Request
+
+###
+
+### [9] PUT request with only name param - should fail
+PUT http://localhost:3000/todos/user123?name=task3
+Content-Type: application/json
+
+// EXPECT: 400 Bad Request
+
+###
+
+### [10] PUT request with only text param - should fail
+PUT http://localhost:3000/todos/user123?text=do+laundry
+Content-Type: application/json
+
+// EXPECT: 400 Bad Request
+
+###
+
+###sec2
+### 🟢 Test 1: Normal safe comment
+POST http://localhost:3000/comment/post123
+Content-Type: application/json
+
+{
+  "username": "alice",
+  "text": "This is a safe comment."
+}
+# @expected: 201 Created
+
+###
+
+### 🟢 Test 2: Get comments for post123
+GET http://localhost:3000/comment/post123
+# @expected: 200 OK
+
+###
+
+### 🔴 Test 3: Attempt to use __proto__ as username (Prototype Pollution)
+POST http://localhost:3000/comment/post123
+Content-Type: application/json
+
+{
+  "username": "__proto__",
+  "text": "polluted"
+}
+# @expected: 400 Bad Request
+
+###
+
+### 🔴 Test 4: Attempt to use constructor as username (Prototype Pollution)
+POST http://localhost:3000/comment/post123
+Content-Type: application/json
+
+{
+  "username": "constructor",
+  "text": "attack"
+}
+# @expected: 400 Bad Request
+
+###
+
+### 🔴 Test 5: Attempt to use prototype as username (Prototype Pollution)
+POST http://localhost:3000/comment/post123
+Content-Type: application/json
+
+{
+  "username": "prototype",
+  "text": "injected"
+}
+# @expected: 400 Bad Request
+
+###
+
+### 🔴 Test 6: Invalid request missing fields
+POST http://localhost:3000/comment/post123
+Content-Type: application/json
+
+{
+  "username": "bob"
+}
+# @expected: 400 Bad Request
+
+###
+
+### 🔴 Test 7: Try polluting using postId as __proto__
+POST http://localhost:3000/comment/__proto__
+Content-Type: application/json
+
+{
+  "username": "hacker",
+  "text": "try prototype attack"
+}
+# @expected: 400 Bad Request
+
+###
+
+### 🔴 Test 8: Try nested prototype pollution (not effective here, but for test)
+POST http://localhost:3000/comment/post123
+Content-Type: application/json
+
+{
+  "username": "user1",
+  "text": {
+    "__proto__": {
+      "hacked": true
+    }
+  }
+}
+# @expected: 201 Created (Text is just a value, not key – harmless here)
+
+###
+
+### 🟢 Test 9: Check pollution did not occur
+GET http://localhost:3000/comment/post123
+# @expected: 200 OK
+
+###sec3
+### [OK] Legitimate setting for user "user123"
+POST http://localhost:3000/settings/user123
+Content-Type: application/json
+
+{
+  "settingKey": "theme",
+  "settingValue": "dark"
+}
+# Expected: 201 Created
+
+###
+
+### [OK] Get settings for user "user123"
+GET http://localhost:3000/settings/user123
+# Expected: 200 OK
+
+###
+
+### [BLOCKED] Attempt prototype pollution via "__proto__"
+POST http://localhost:3000/settings/user123
+Content-Type: application/json
+
+{
+  "settingKey": "__proto__",
+  "settingValue": { "polluted": true }
+}
+# Expected: 400 Bad Request
+
+###
+
+### [BLOCKED] Attempt prototype pollution via "constructor"
+POST http://localhost:3000/settings/user123
+Content-Type: application/json
+
+{
+  "settingKey": "constructor",
+  "settingValue": { "danger": true }
+}
+# Expected: 400 Bad Request
+
+###
+
+### [BLOCKED] Attempt prototype pollution via "prototype"
+POST http://localhost:3000/settings/user123
+Content-Type: application/json
+
+{
+  "settingKey": "prototype",
+  "settingValue": { "hacked": true }
+}
+# Expected: 400 Bad Request
+
+###
+
+### [BLOCKED] Missing settingKey
+POST http://localhost:3000/settings/user123
+Content-Type: application/json
+
+{
+  "settingValue": "valueOnly"
+}
+# Expected: 400 Bad Request
+
+###
+
+### [BLOCKED] Unknown user
+GET http://localhost:3000/settings/unknownUser
+# Expected: 404 Not Found
+
+###sec4
+### Test 1: Valid request (should succeed)
+POST http://localhost:3000/survey/foodSurvey
+Content-Type: application/json
+
+{
+  "userId": "user123",
+  "answers": {
+    "q1": "yes",
+    "q2": "no"
+  }
+}
+# Expected: 201 Created
+
+###
+
+### Test 2: Missing userId (should fail)
+POST http://localhost:3000/survey/foodSurvey
+Content-Type: application/json
+
+{
+  "answers": {
+    "q1": "yes"
+  }
+}
+# Expected: 400 Bad Request
+
+###
+
+### Test 3: userId = "__proto__" → attempt prototype pollution (should be blocked)
+POST http://localhost:3000/survey/pollutionTest
+Content-Type: application/json
+
+{
+  "userId": "__proto__",
+  "answers": {
+    "polluted": true
+  }
+}
+# Expected: 400 Bad Request
+
+###
+
+### Test 4: userId = "constructor" → another prototype pollution key (should be blocked)
+POST http://localhost:3000/survey/pollutionTest2
+Content-Type: application/json
+
+{
+  "userId": "constructor",
+  "answers": {
+    "admin": true
+  }
+}
+# Expected: 400 Bad Request
+
+###
+
+### Test 5: userId with unsafe characters (should be blocked)
+POST http://localhost:3000/survey/formatCheck
+Content-Type: application/json
+
+{
+  "userId": "admin<script>",
+  "answers": {
+    "xss": "attack"
+  }
+}
+# Expected: 400 Bad Request
+
+###
+
+### Test 6: answers is null (invalid type)
+POST http://localhost:3000/survey/nullAnswers
+Content-Type: application/json
+
+{
+  "userId": "user456",
+  "answers": null
+}
+# Expected: 400 Bad Request
+
+###
+
+### Test 7: Check if previous pollution worked (read back)
+GET http://localhost:3000/survey/__proto__
+# Expected: 404 Not Found (pollution blocked)
+
+###
+
+### Test 8: Valid GET for valid survey
+GET http://localhost:3000/survey/foodSurvey
+# Expected: 200 OK with saved result
+
+###sec5
+### ✅ Valid cart addition (normal usage)
+POST http://localhost:3000/cart/session123
+Content-Type: application/json
+
+{
+  "itemId": "apple",
+  "quantity": 3
+}
+# => expected: 201 Created
+
+###
+
+### ✅ Valid second item in same session
+POST http://localhost:3000/cart/session123
+Content-Type: application/json
+
+{
+  "itemId": "banana",
+  "quantity": 5
+}
+# => expected: 201 Created
+
+###
+
+### ✅ Fetch cart
+GET http://localhost:3000/cart/session123
+# => expected: 200 OK
+
+###
+
+### ❌ Attempt prototype pollution with "__proto__"
+POST http://localhost:3000/cart/session999
+Content-Type: application/json
+
+{
+  "itemId": "__proto__",
+  "quantity": { "isAdmin": true }
+}
+# => expected: 400 Bad Request
+
+###
+
+### ❌ Attempt prototype pollution with "constructor"
+POST http://localhost:3000/cart/session999
+Content-Type: application/json
+
+{
+  "itemId": "constructor",
+  "quantity": 42
+}
+# => expected: 400 Bad Request
+
+###
+
+### ❌ Attempt prototype pollution with "prototype"
+POST http://localhost:3000/cart/session999
+Content-Type: application/json
+
+{
+  "itemId": "prototype",
+  "quantity": 99
+}
+# => expected: 400 Bad Request
+
+###
+
+### ❌ Missing itemId (invalid request)
+POST http://localhost:3000/cart/session123
+Content-Type: application/json
+
+{
+  "quantity": 1
+}
+# => expected: 400 Bad Request
+
+###
+
+### ❌ Missing quantity (invalid request)
+POST http://localhost:3000/cart/session123
+Content-Type: application/json
+
+{
+  "itemId": "orange"
+}
+# => expected: 400 Bad Request
+
+###
+
+### ❌ Fetch nonexistent cart
+GET http://localhost:3000/cart/no_such_session
+# => expected: 404 Not Found
