@@ -17,7 +17,7 @@ const pool = new Pool({
   port: process.env.PG_PORT ? parseInt(process.env.PG_PORT, 10) : 5432,
 });
 
-// Middleware to parse JSON
+// Middleware to parse JSON if needed in future
 app.use(express.json());
 
 /**
@@ -36,7 +36,7 @@ app.get('/api/posts/search', async (req, res) => {
 
     const searchKeyword = `%${keyword.trim()}%`;
 
-    // Fixed: Using parameterized query
+    // Secure parameterized query
     const queryText = `
       SELECT id, title, content, created_at
       FROM posts
@@ -68,8 +68,9 @@ app.post('/api/user', async (req, res) => {
       return res.status(400).json({ error: 'User ID is required and must be a non-empty string.' });
     }
 
-    // Fixed: Using parameterized query
+    // Secure parameterized query
     const queryText = "SELECT id, username, email FROM users WHERE id = $1 LIMIT 1";
+
     const { rows } = await pool.query(queryText, [id]);
 
     if (rows.length === 0) {
@@ -103,7 +104,7 @@ app.put('/api/posts/update', async (req, res) => {
       return res.status(400).json({ error: 'Content is required and must be a string.' });
     }
 
-    // Fixed: Using parameterized query
+    // Secure parameterized query
     const queryText = `
       UPDATE posts
       SET title = $1, content = $2

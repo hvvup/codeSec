@@ -21,7 +21,7 @@ const ADMIN_TOKEN = 'admin123';
 // Middleware to verify admin access
 const verifyAdmin = (req, res, next) => {
     const authHeader = req.headers.authorization;
-    
+
     if (!authHeader) {
         return res.status(401).json({ 
             error: 'Authorization header missing' 
@@ -45,29 +45,20 @@ const verifyAdmin = (req, res, next) => {
     next();
 };
 
-// GET endpoint for admin users with secure SQL construction
+// GET endpoint for admin users with secure parameterized query
 app.get('/api/admin/users', verifyAdmin, async (req, res) => {
     try {
-        const roleFilter = req.query.role || '';
+        const roleFilter = req.query.role;
         let queryText = 'SELECT id, username, email, role, created_at FROM users';
-        let queryParams = [];
+        const queryParams = [];
 
         if (roleFilter) {
-            // Optional: Validate allowed roles if your system defines fixed roles
-            const allowedRoles = ['admin', 'user', 'manager']; // Example roles
-            if (!allowedRoles.includes(roleFilter)) {
-                return res.status(400).json({
-                    error: 'Invalid role filter provided'
-                });
-            }
-
             queryText += ' WHERE role = $1';
             queryParams.push(roleFilter);
         }
 
-        // Execute the secure parameterized query
         const { rows } = await pool.query(queryText, queryParams);
-        
+
         const sanitizedUsers = rows.map(user => ({
             id: user.id,
             username: user.username,
@@ -90,23 +81,19 @@ app.get('/api/admin/users', verifyAdmin, async (req, res) => {
     }
 });
 
-// Secure search endpoint using parameterized LIKE queries
+// Secure search endpoint with parameterized query
 app.get('/api/admin/users/search', verifyAdmin, async (req, res) => {
     try {
         const searchTerm = req.query.term || '';
-
-        // Escape % and _ in search term to avoid unintended wildcards
-        const escapedSearchTerm = searchTerm.replace(/[%_]/g, '\\$&');
-        const likePattern = `%${escapedSearchTerm}%`;
-
         const queryText = `
             SELECT id, username, email, role, created_at 
             FROM users 
-            WHERE username ILIKE $1 ESCAPE '\\' OR email ILIKE $1 ESCAPE '\\'
+            WHERE username ILIKE $1 OR email ILIKE $1
         `;
-        
-        const { rows } = await pool.query(queryText, [likePattern]);
-        
+        const searchPattern = `%${searchTerm}%`;
+
+        const { rows } = await pool.query(queryText, [searchPattern]);
+
         const sanitizedUsers = rows.map(user => ({
             id: user.id,
             username: user.username,

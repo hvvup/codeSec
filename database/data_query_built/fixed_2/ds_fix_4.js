@@ -32,7 +32,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid input: username and password are required.' });
     }
 
-    // Fixed: Using parameterized query to prevent SQL injection
+    // Secure query: using parameterized query
     const queryText = "SELECT * FROM userslogin WHERE username = $1";
     const result = await pool.query(queryText, [username]);
 

@@ -38,7 +38,7 @@ app.post('/api/user', async (req, res, next) => {
   }
 
   try {
-    // Fixed: Using parameterized query to prevent SQL injection
+    // Secure query using parameterized input
     const query = 'SELECT userId, name, email FROM users WHERE userId = $1';
     const result = await pool.query(query, [userId]);
 

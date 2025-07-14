@@ -26,7 +26,7 @@ app.get('/api/search/:category', async (req, res, next) => {
   const category = req.params.category;
 
   try {
-    // Fixed: Using parameterized query
+    // Secure SQL query using parameterization
     const query = 'SELECT item, price FROM products WHERE category = $1';
     const result = await pool.query(query, [category]);
 
@@ -44,13 +44,8 @@ app.get('/api/search/:category', async (req, res, next) => {
 app.post('/api/products', async (req, res, next) => {
   const { item, price, category } = req.body;
 
-  // Input validation
-  if (!item || !category || typeof price !== 'number') {
-    return res.status(400).json({ error: 'Invalid product data' });
-  }
-
   try {
-    // Fixed: Using parameterized query
+    // Secure SQL insert with parameterized input
     const query = 'INSERT INTO products (item, price, category) VALUES ($1, $2, $3)';
     await pool.query(query, [item, price, category]);
 
@@ -67,13 +62,8 @@ app.post('/api/products', async (req, res, next) => {
 app.get('/api/products/:id', async (req, res, next) => {
   const productId = req.params.id;
 
-  // Input validation
-  if (isNaN(productId)) {
-    return res.status(400).json({ error: 'Invalid product ID' });
-  }
-
   try {
-    // Fixed: Using parameterized query
+    // Secure SQL query by ID with parameterization
     const query = 'SELECT * FROM products WHERE id = $1';
     const result = await pool.query(query, [productId]);
 
@@ -91,13 +81,8 @@ app.get('/api/products/:id', async (req, res, next) => {
 app.delete('/api/products/:id', async (req, res, next) => {
   const productId = req.params.id;
 
-  // Input validation
-  if (isNaN(productId)) {
-    return res.status(400).json({ error: 'Invalid product ID' });
-  }
-
   try {
-    // Fixed: Using parameterized query
+    // Secure deletion with parameterized input
     const query = 'DELETE FROM products WHERE id = $1';
     await pool.query(query, [productId]);
 

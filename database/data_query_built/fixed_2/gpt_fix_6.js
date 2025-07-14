@@ -40,7 +40,7 @@ app.put('/api/user/update', validateUserInput, async (req, res) => {
   const { email, name, age } = req.body;
 
   try {
-    // Check if user exists - FIXED: use parameterized query
+    // Secure user existence check using parameterized query
     const userCheckQuery = 'SELECT id FROM users WHERE email = $1';
     const userCheck = await pool.query(userCheckQuery, [email]);
 
@@ -51,7 +51,7 @@ app.put('/api/user/update', validateUserInput, async (req, res) => {
       });
     }
 
-    // Update user - FIXED: use parameterized query
+    // Secure update query using parameterized query
     const updateQuery = `
       UPDATE users 
       SET name = $1, age = $2, updated_at = NOW() 

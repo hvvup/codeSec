@@ -60,9 +60,9 @@ app.post('/api/comments/report', async (req, res) => {
   let client;
   try {
     client = await pool.connect();
-    
-    // FIXED: Use parameterized query to prevent SQL injection
-    const queryText = 'UPDATE comments SET reported = true WHERE id = $1 RETURNING id';
+
+    // ✅ Secure parameterized query
+    const queryText = `UPDATE comments SET reported = true WHERE id = $1 RETURNING id`;
     const result = await client.query(queryText, [commentId]);
 
     // Check if comment was found and updated

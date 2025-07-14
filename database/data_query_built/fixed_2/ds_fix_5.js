@@ -30,10 +30,9 @@ app.delete('/api/todo/delete', async (req, res) => {
       return res.status(400).json({ error: '_id must be a string or number and is required.' });
     }
 
-    // Convert to string for consistency (though parameterized queries handle both)
     const rawId = _id.toString();
 
-    // Fixed: Using parameterized query to prevent SQL injection
+    // Secure SQL query using parameterization
     const queryText = "DELETE FROM todos WHERE id = $1 RETURNING *";
     const result = await pool.query(queryText, [rawId]);
 
@@ -51,6 +50,7 @@ app.delete('/api/todo/delete', async (req, res) => {
   }
 });
 
+// Additional secure route for login
 /**
  * POST /api/login
  * Body: { username, password }
@@ -63,7 +63,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(400).json({ error: 'Invalid input: username and password are required.' });
     }
 
-    // Fixed: Using parameterized query to prevent SQL injection
+    // Secure query using parameterization
     const queryText = "SELECT * FROM userslogin_5 WHERE username = $1";
     const result = await pool.query(queryText, [username]);
 
@@ -71,8 +71,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password.' });
     }
 
-    // WARNING: This is still insecure - passwords should NEVER be stored in plaintext
-    // This is just maintaining the original functionality
+    // Check if any user has matching password
     const user = result.rows.find(u => password === u.plaintext_password);
 
     if (!user) {

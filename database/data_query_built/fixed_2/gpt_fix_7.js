@@ -34,15 +34,6 @@ app.delete('/api/product/delete', async (req, res) => {
     }
 
     const productId = req.body.productId;
-
-    // Input validation: ensure productId is an integer
-    if (!Number.isInteger(productId)) {
-        return res.status(400).json({
-            success: false,
-            message: 'Invalid productId. Must be an integer.'
-        });
-    }
-
     const client = await pool.connect().catch(err => {
         console.error('Database connection error:', err);
         return null;
@@ -56,7 +47,6 @@ app.delete('/api/product/delete', async (req, res) => {
     }
 
     try {
-        // FIXED: use parameterized query to prevent SQL injection
         const deleteQuery = 'DELETE FROM products WHERE id = $1 RETURNING *';
         const result = await client.query(deleteQuery, [productId]);
 

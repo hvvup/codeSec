@@ -29,7 +29,7 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'healthy', timestamp: new Date().toISOString() });
 });
 
-// GET endpoint to fetch posts by author
+// GET endpoint to fetch posts by author (secure)
 app.get('/api/posts/author/:name', async (req, res) => {
   try {
     const authorName = req.params.name;
@@ -38,11 +38,10 @@ app.get('/api/posts/author/:name', async (req, res) => {
       return res.status(400).json({ error: 'Invalid author name parameter' });
     }
 
-    // FIXED: Use parameterized query to prevent SQL injection
     const queryText = `
       SELECT title, body, author 
       FROM posts 
-      WHERE author = $1
+      WHERE author = $1 
       ORDER BY created_at DESC
     `;
 
