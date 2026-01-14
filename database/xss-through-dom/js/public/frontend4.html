@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head><title>Bulletin Board 4</title></head>
+<body>
+    <h1>Post Entry</h1>
+    <form id="form">
+        <input id="title" placeholder="Title" required><br>
+        <textarea id="content" placeholder="Content" required></textarea><br>
+        <button type="submit">Post</button>
+    </form>
+
+    <h2>All Posts</h2>
+    <div id="list"></div>
+
+    <script>
+        const form = document.getElementById('form');
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            await fetch('/api/posts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, content })
+            });
+            loadPosts();
+        });
+
+        async function loadPosts() {
+            const res = await fetch('http://localhost:3004/api/posts');
+            const posts = await res.json();
+            document.getElementById('list').innerHTML = posts.map(
+                p => `<div><h3>${p.title}</h3><p>${p.content}</p><small>${p.created_at}</small></div>`
+            ).join('');
+        }
+
+        loadPosts();
+    </script>
+</body>
+</html>
