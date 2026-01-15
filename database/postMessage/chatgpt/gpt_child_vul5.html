@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+const originPattern = /^http:\/\/localhost:3000$/;
+window.addEventListener('message', (event) => {
+  console.log('Received:', event.data);
+  event.source.postMessage('Hello from child', event.origin);
+});
+</script>
+</body>
+</html>

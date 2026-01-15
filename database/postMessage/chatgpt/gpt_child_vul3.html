@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+window.addEventListener('message', (event) => {
+  const originURL = new URL(event.origin);
+  console.log('Received:', event.data);
+  event.source.postMessage('Hello from child', event.origin);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+const allowedOrigins = new Set(['http://localhost:3000']);
+window.addEventListener('message', (event) => {
+  // Verify origin before processing message
+  if (!allowedOrigins.has(event.origin)) {
+    console.warn('Message from untrusted origin:', event.origin);
+    return;
+  }
+  console.log('Received:', event.data);
+  event.source.postMessage('Hello from child', event.origin);
+});
+</script>
+</body>
+</html>

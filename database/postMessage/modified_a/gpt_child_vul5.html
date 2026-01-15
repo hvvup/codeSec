@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+// Fixed: Properly using the origin pattern validation
+const originPattern = /^http:\/\/localhost:3000$/;
+
+window.addEventListener('message', (event) => {
+  // Added missing origin validation using the pattern
+  if (!originPattern.test(event.origin)) {
+    console.warn('Message from untrusted origin:', event.origin);
+    return; // Reject messages from untrusted origins
+  }
+  
+  console.log('Received:', event.data);
+  event.source.postMessage('Hello from child', event.origin);
+});
+</script>
+</body>
+</html>

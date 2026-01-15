@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+window.addEventListener('message', (event) => {
+  if (event.origin === 'http://localhost:3000') {
+    console.log('Received:', event.data);
+    event.source.postMessage('Hello from child', event.origin);
+  }
+});
+</script>
+</body>
+</html>

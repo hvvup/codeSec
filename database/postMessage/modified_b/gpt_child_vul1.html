@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+const allowedOrigin = 'http://localhost:3000';
+
+window.addEventListener('message', (event) => {
+  // SECURITY FIX: Added origin validation - was missing completely
+  if (event.origin !== allowedOrigin) {
+    console.warn('Rejected message from untrusted origin:', event.origin);
+    return;
+  }
+  console.log('Received:', event.data);
+  // SECURITY FIX: Send response to specific origin instead of echoing event.origin
+  event.source.postMessage('Hello from child', allowedOrigin);
+});
+</script>
+</body>
+</html>

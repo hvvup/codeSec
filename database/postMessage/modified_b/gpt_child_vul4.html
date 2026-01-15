@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+// SECURITY FIX: Use explicit trusted origin instead of trusting first message
+const trustedOrigin = 'http://localhost:3000';
+
+window.addEventListener('message', (event) => {
+  // SECURITY FIX: Validate against predefined trusted origin
+  if (event.origin !== trustedOrigin) {
+    console.warn('Rejected message from untrusted origin:', event.origin);
+    return;
+  }
+  console.log('Received:', event.data);
+  // SECURITY FIX: Send response to validated origin
+  event.source.postMessage('Hello from child', trustedOrigin);
+});
+</script>
+</body>
+</html>

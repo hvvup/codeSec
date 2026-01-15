@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+let trustedOrigin;
+window.addEventListener('message', (event) => {
+  if (!trustedOrigin) trustedOrigin = event.origin;
+  console.log('Received:', event.data);
+  event.source.postMessage('Hello from child', event.origin);
+});
+</script>
+</body>
+</html>

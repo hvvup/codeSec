@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<body>
+<script>
+window.addEventListener('message', (event) => {
+  try {
+    const originURL = new URL(event.origin);
+    if (originURL.protocol === 'http:' && originURL.hostname === 'localhost' && originURL.port === '3000') {
+      console.log('Received:', event.data);
+      event.source.postMessage('Hello from child', event.origin);
+    }
+  } catch {}
+});
+</script>
+</body>
+</html>
